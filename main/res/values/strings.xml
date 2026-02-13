@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">DC charger and AC converter</string>
+    <string name="back_button">Back</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">DC/AC converter and Dev. Control</string>
@@ -12,15 +13,15 @@
     <string name="previous">Previous</string>
     <string name="IP_MAC">IP Address</string>
     <string name="HELP_settings">Help for setting</string>
-    <string name="device1">Device1</string>
-    <string name="device2">Device2</string>
-    <string name="device3">Device3</string>
-    <string name="device4">Device4</string>
-    <string name="device5">Device5</string>
-    <string name="device6">Device6</string>
-    <string name="device7">Device7</string>
-    <string name="device8">Device8</string>
-    <string name="device9">Device9</string>
+    <string name="device1">Device 1</string>
+    <string name="device2">Device 2</string>
+    <string name="device3">Device 3</string>
+    <string name="device4">Device 4</string>
+    <string name="device5">Device 5</string>
+    <string name="device6">Device 6</string>
+    <string name="device7">Device 7</string>
+    <string name="device8">Device 8</string>
+    <string name="device9">Device 9</string>
     <string name="ON">ON</string>
     <string name="OFF">OFF</string>
     <string name="voltages">Converter Voltages</string>
