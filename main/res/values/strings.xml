@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">DC charger and AC converter</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">DC/AC converter and Dev. Control</string>
+    <string name="voltage_fragment_label">Voltages in chargers and Battery</string>
+    <string name="help_fragment_label">Help Settings</string>
+    <string name="ip_mac_fragment_label">IP and MAC address Settings</string>
+    <string name="char_scheduler_fragment_label">Time scheduler for Chargers</string>
+    <string name="dev_scheduler_fragment_label">Devices control time scheduler</string>
+    <string name="restore_connection">Check Connection</string>
+    <string name="previous">Previous</string>
+    <string name="IP_MAC">IP Address</string>
+    <string name="HELP_settings">Help for setting</string>
+    <string name="device1">Device1</string>
+    <string name="device2">Device2</string>
+    <string name="device3">Device3</string>
+    <string name="device4">Device4</string>
+    <string name="device5">Device5</string>
+    <string name="device6">Device6</string>
+    <string name="device7">Device7</string>
+    <string name="device8">Device8</string>
+    <string name="device9">Device9</string>
+    <string name="ON">ON</string>
+    <string name="OFF">OFF</string>
+    <string name="voltages">Converter Voltages</string>
+    <string name="scheduler">Devices Scheduler</string>
+    <string name="scheduler_charger">Charger Scheduler</string>
+    <string name="notSet">Not set</string>
+    <string name="Sun">Sun</string>
+    <string name="Mon">Mon</string>
+    <string name="Tue">Tue</string>
+    <string name="Wed">Wed</string>
+    <string name="Thu">Thu</string>
+    <string name="Fri">Fri</string>
+    <string name="Sat">Sat</string>
+    <string name="Days">Days</string>
+    <string name="SetDays">Set Scheduler Days</string>
+
+</resources>

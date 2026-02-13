@@ -7,4 +7,5 @@ class Devices (
     @PrimaryKey(autoGenerate = true)
     val device_number: Int = 0,
     val device_name: String ="Device 0"
+
 )

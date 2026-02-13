@@ -7,12 +7,17 @@ import kotlinx.coroutines.flow.Flow
 
 interface DaoDevices {
 
+    @Query("SELECT * FROM devices")
+    fun getAll(): List<Devices>
+
     @Query("SELECT * FROM devices WHERE device_number = :deviceId")
     fun getItem(deviceId: Int): Flow<Devices>
 
 
     @Query("SELECT * FROM devices WHERE device_number IN (:deviceIds)")
     fun loadAllByIds(deviceIds: IntArray): List<Devices>
+
+
 
     @Insert
     fun insert ( vararg device: Devices)
