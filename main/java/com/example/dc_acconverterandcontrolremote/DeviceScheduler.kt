@@ -1,0 +1,256 @@
+package com.example.dc_acconverterandcontrolremote
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.*
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.ui.unit.dp
+import androidx.constraintlayout.compose.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.*
+import android.app.TimePickerDialog
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.MultiChoiceSegmentedButtonRow
+import java.util.*
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.material3.TextField
+
+
+    @Composable
+    fun EditTextONOFF(context: Context, device_number : Int, on_or_off : String, modifier: Modifier) {
+
+        val calendar = Calendar.getInstance()
+        val hourNnw = calendar[Calendar.HOUR_OF_DAY]
+        val minuteNow = calendar[Calendar.MINUTE]
+        var hourSet: Int? = 12
+        var minuteSet: Int? = 0
+        var timeToShow: String =""
+        val string_onoff:String = stringResource(R.string.ON)
+
+        TextField(
+            colors= MaterialTheme.colorScheme.onPrimary,
+            readOnly = false,
+            enabled = false,
+            Value= timeToShow,
+            label =  Text(on_or_off) ,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            placeholder = Text(stringResource(R.string.click)),
+            Modifier= Modifier.clickable{
+
+                val timePickerDialog = TimePickerDialog(
+                    context,
+                    { _, selectedHour: Int, selectedMinute: Int ->
+                        hourSet = selectedHour
+                        minuteSet = selectedMinute
+                    },
+                    hourNnw, // Current hour
+                    minuteNow, // Current minute
+                    false // false = 12-hour format
+                )
+
+                val device: List<Devices> = devicesDao?.getItem(device_number) as List<Devices>
+                if (on_or_off == string_onoff ) {
+                    device.get(0).hour_on = hourSet
+                    device.get(0).minutes_on = minuteSet
+                } else {
+                    device.get(0).hour_off = hourSet
+                    device.get(0).minutes_off = minuteSet
+                }
+                timeToShow= "$hourSet : $minuteSet"
+            }
+        )
+    }
+
+    @Composable
+    fun ConstrainWithEditTextOnOff(context:Context, device_number:Int, device_name:String) {
+
+        ConstraintLayout(Modifier
+            .wrapContentSize()
+            .background(color = MaterialTheme.colorScheme.background)) {
+
+            val on: String = stringResource(R.string.ON)
+            val off: String = stringResource(R.string.OFF)
+            val (editOn, editOff, titleName,timeOn,timeOff, daysOfWeek) = createRefs()
+
+            val modifierText: Modifier = Modifier
+                .constrainAs(titleName) {
+                    top.linkTo(parent.top, margin = 10.dp)
+                    bottom.linkTo(editOff.top, margin = 10.dp)
+                    centerHorizontallyTo(parent)
+                }
+
+            val modifierTextON: Modifier = Modifier
+                .constrainAs(timeOn) {
+                    top.linkTo(titleName.bottom, margin = 5.dp)
+                    bottom.linkTo(daysOfWeek.top, margin = 5.dp)
+                    end.linkTo(editOn.start)
+                }
+
+            val modifierEditOn: Modifier = Modifier
+                .constrainAs(editOn) {
+                    top.linkTo(titleName.bottom, margin = 5.dp)
+                    bottom.linkTo(daysOfWeek.top, margin = 5.dp)
+                    start.linkTo(timeOn.end)
+                    end.linkTo(editOff.start)
+                }
+
+            val modifierTextOFF: Modifier = Modifier
+                .constrainAs(timeOff) {
+                    top.linkTo(titleName.bottom, margin = 5.dp)
+                    bottom.linkTo(daysOfWeek.top, margin = 5.dp)
+                    start.linkTo(editOn.end)
+                    end.linkTo(editOff.start)
+                }
+
+            val modifierEditOff: Modifier = Modifier
+                .constrainAs(editOff) {
+                    top.linkTo(titleName.bottom, margin = 5.dp)
+                    bottom.linkTo(daysOfWeek.top, margin = 5.dp)
+                    start.linkTo(timeOff.end)
+                }
+
+
+            val modifierRButtonDaysOfWeek = Modifier
+                .wrapContentSize()
+                .constrainAs(daysOfWeek) {
+                top.linkTo(editOn.bottom, margin = 5.dp)
+                bottom.linkTo(parent.bottom, margin = 5.dp)
+                    centerHorizontallyTo(parent)
+            }
+
+
+            Text(text = device_name,
+                color= MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = modifierText)
+            Text(text = stringResource(R.string.timeOn),
+                color= MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = modifierTextON)
+            Text(text = device_name,
+                color= MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = modifierTextOFF)
+            EditTextONOFF(context,device_number, on, modifierEditOn)
+            EditTextONOFF(context, device_number, off, modifierEditOff)
+            createHorizontalChain(
+                editOn, editOff,
+                chainStyle = ChainStyle.SpreadInside
+            )
+
+            var days_Selected:Int =0
+
+            val selectedOptions = remember { mutableStateListOf(false, false, false,false,false,false,false)}
+
+            val options = listOf(stringResource(R.string.Sun), stringResource(R.string.Mon),
+                stringResource(R.string.Tue),stringResource(R.string.Wed),
+                stringResource(R.string.Thu),stringResource(R.string.Fri),
+                stringResource(R.string.Sat))
+
+                MultiChoiceSegmentedButtonRow(modifier = modifierRButtonDaysOfWeek) {
+                options.forEachIndexed { index, label ->
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = options.size
+                        ),
+                        checked = selectedOptions[index],
+                        onCheckedChange = {
+                            selectedOptions[index] = !selectedOptions[index]
+                        },
+                        label = {
+                            when (label) {
+                                options[0] ->
+                                    if(selectedOptions[index]==true){
+                                        days_Selected= days_Selected or 1
+                                    }else{
+                                        days_Selected= (days_Selected and (1).inv())
+                                    }
+                                options[1] ->
+                                        if(selectedOptions[index]==true){
+                                            days_Selected= days_Selected or 2
+                                        }else{
+                                            days_Selected= (days_Selected and (2).inv())
+                                        }
+                                options[2] ->
+                                    if(selectedOptions[index]==true){
+                                        days_Selected= days_Selected or 4
+                                    }else{
+                                        days_Selected= (days_Selected and (4).inv())
+                                    }
+                                options[3] ->
+                                    if(selectedOptions[index]==true){
+                                        days_Selected= days_Selected or 8
+                                    }else{
+                                        days_Selected= (days_Selected and (8).inv())
+                                    }
+                                options[4] ->
+                                    if(selectedOptions[index]==true){
+                                        days_Selected= days_Selected or 16
+                                    }else{
+                                        days_Selected= (days_Selected and (16).inv())
+                                    }
+                                options[5] ->
+                                    if(selectedOptions[index]==true){
+                                        days_Selected= days_Selected or 32
+                                    }else{
+                                        days_Selected= (days_Selected and (32).inv())
+                                    }
+                                options[6] ->
+                                    if(selectedOptions[index]==true){
+                                        days_Selected= days_Selected or 64
+                                    }else{
+                                        days_Selected= (days_Selected and (64).inv())
+                                    }
+                                options[7] ->
+                                    if(selectedOptions[index]==true){
+                                        days_Selected= days_Selected or 128
+                                    }else{
+                                        days_Selected= (days_Selected and (128).inv())
+                                    }
+
+                            }
+
+                            val device: List<Devices> = devicesDao?.getItem(device_number) as List<Devices>
+                                device.get(0).days_week = days_Selected
+
+                        }
+                    )
+                }
+            }
+
+        }
+
+
+        }
+
+
+
+    @Composable
+    fun DeviceScheduler_Screen(context: Context){
+
+        val devicesListSize: Int = deviceList()?.size ?: 0
+
+        LazyVerticalGrid(columns = GridCells.Fixed(2),Modifier
+            .wrapContentSize()
+            .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            items(devicesListSize){
+                ConstrainWithEditTextOnOff(context,it, deviceName(it)?:"" )
+            }
+        }
+    }
+

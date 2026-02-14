@@ -2,13 +2,16 @@
     <string name="app_name">DC charger and AC converter</string>
     <string name="back_button">Back</string>
     <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">DC/AC converter and Dev. Control</string>
+    <string name="Button_list">Devices Action Buttons</string>
     <string name="voltage_fragment_label">Voltages in chargers and Battery</string>
+    <string name="Voltage_list">Voltages in system</string>
     <string name="help_fragment_label">Help Settings</string>
     <string name="ip_mac_fragment_label">IP and MAC address Settings</string>
     <string name="char_scheduler_fragment_label">Time scheduler for Chargers</string>
+    <string name="char_scheduler_list">Chargers Scheduler</string>
     <string name="dev_scheduler_fragment_label">Devices control time scheduler</string>
+    <string name="dev_scheduler_list">Devices Scheduler</string>
     <string name="restore_connection">Check Connection</string>
     <string name="previous">Previous</string>
     <string name="IP_MAC">IP Address</string>
@@ -37,5 +40,14 @@
     <string name="Sat">Sat</string>
     <string name="Days">Days</string>
     <string name="SetDays">Set Scheduler Days</string>
+    <string name="toast_set_nbr_devices">Quantity of devices updated</string>
+    <string name="toast_set_MAC">MAC address updated</string>
+    <string name="toast_set_IP">IP address updated</string>
+    <string name="devices_deleted_toast"> control devices where deleted</string>
+    <string name="devices_added_toast"> control devices where added</string>
+    <string name="timeOn">Time ON:</string>
+    <string name="timeOFF">Time OFF:</string>
+    <string name="click">Click to set</string>
+
 
 </resources>

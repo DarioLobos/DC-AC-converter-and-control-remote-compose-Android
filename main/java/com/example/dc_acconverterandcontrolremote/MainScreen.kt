@@ -1,53 +1,26 @@
 package com.example.dc_acconverterandcontrolremote
-import com.example.dc_acconverterandcontrolremote.R
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.dc_acconverterandcontrolremote.ui.theme.DC_ACConverterAndControlRemoteTheme
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.*
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items // For lists of items
 import androidx.compose.material3.*
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import java.nio.file.WatchEvent
 import androidx.constraintlayout.compose.*
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.res.stringResource
-import androidx.activity.enableEdgeToEdge
-import androidx.collection.emptyLongSet
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
-import androidx.compose.runtime.*
 
 
 var devices: List <Devices>?= null
@@ -74,21 +47,21 @@ suspend fun devicesSet(context: Context, nbr_devices:Int) {
     context.myDataStore.edit {
         it[NUMBER_DEVICES]=nbr_devices
     }
-    //pending toast
+    Toast.makeText(context,R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT)
 }
 
 suspend fun macAddressSet(context: Context, mac_address:Int) {
     context.myDataStore.edit {
         it[MAC_ADDRESS]=mac_address
     }
-    //pending toast
+    Toast.makeText(context,R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
 }
 
 suspend fun IPAddressSet(context: Context, ip_address:Int) {
     context.myDataStore.edit {
         it[IP_ADDRESS]=ip_address
     }
-    //pending toast
+    Toast.makeText(context,R.string.toast_set_IP, Toast.LENGTH_SHORT).show()
 }
 
 suspend fun devicesInit(context: Context) {
@@ -123,7 +96,6 @@ suspend fun deviceListInit() {
 
 
     suspend fun deviceListSizeUpdate(context: Context, qty_devices: Int) {
-
         val devices: Int = context.myDataStore.data.map {
             it[NUMBER_DEVICES] ?: 0
         }.toString().toInt()
@@ -133,13 +105,23 @@ suspend fun deviceListInit() {
             for (i in (devices - 1) downTo (qty_devices - 1)) {
                 devicesDao?.delete((devicesDao?.getItem(i) as List<Devices>).get(0))
             }
-            //pending toast
-
 
             devicesSet(context, qty_devices)
+            val deleted = devices - qty_devices
+            val toast_message: String = "$deleted S{R.string.devices_deleted_toast}"
+            Toast.makeText(context, toast_message, Toast.LENGTH_SHORT).show()
+
+        } else if (devices < qty_devices) {
+
+            for (i in devices..(qty_devices - 1)) {
+                devicesDao?.insert(Devices(i, "Devices $i"))
+            }
+            val added = qty_devices - devices
+            val toast_message: String = "$added S{R.string.devices_added_toast}"
+            Toast.makeText(context, toast_message, Toast.LENGTH_SHORT).show()
+            // pending add more
 
         }
-        // pending add more
     }
 
 fun sendActionToWiFI(device_number: Int, on_or_off: String){
@@ -153,10 +135,11 @@ fun ButtonstoONOFF(device_number : Int, on_or_off : String, modifier: Modifier) 
     ElevatedButton(
         onClick = {
         sendActionToWiFI(device_number, on_or_off)
-    },
+        },
+        shape = MaterialTheme.shapes.extraLarge,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Cyan,
-            contentColor = Color.Blue
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ),
         content = { Text(on_or_off, color = Color.Black, fontSize = 20.sp) },
         modifier = modifier.wrapContentSize()
@@ -165,12 +148,11 @@ fun ButtonstoONOFF(device_number : Int, on_or_off : String, modifier: Modifier) 
     }
 
 @Composable
-fun constraionWithButtonsOnOff(device_number:Int, device_name:String) {
-
+fun ConstraionWithButtonsOnOff(device_number:Int, device_name:String) {
 
     ConstraintLayout(Modifier
         .wrapContentSize()
-        .background(color = Color.Cyan)) {
+        .background(color = MaterialTheme.colorScheme.background)) {
 
         val on: String = stringResource(R.string.ON)
         val off: String = stringResource(R.string.OFF)
@@ -197,7 +179,11 @@ fun constraionWithButtonsOnOff(device_number:Int, device_name:String) {
                 start.linkTo(buttonOn.end)
             }
 
-        Text(text = device_name, color = Color.Black, modifier = modifierText)
+        Text(text = device_name,
+            color= MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = modifierText)
         ButtonstoONOFF(device_number, on, modifierOn)
         ButtonstoONOFF(device_number, off, modifierOff)
         createHorizontalChain(
@@ -213,48 +199,17 @@ fun LazyGridForButtonsMain(){
 
         val devicesListSize: Int = deviceList()?.size ?: 0
 
-        LazyVerticalGrid(columns = GridCells.Fixed(2),Modifier
-            .wrapContentSize()
-            .fillMaxWidth(),
+        LazyVerticalGrid(columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             items(devicesListSize){
-            constraionWithButtonsOnOff(it, deviceName(it)?:"" )
+            ConstraionWithButtonsOnOff(it, deviceName(it)?:"" )
             }
         }
     }
 
-
-
-@Composable
-fun DropMenuSettings(){
-    var expanded by remember { mutableStateOf(false) }
-    Box (
-        modifier= Modifier
-            .padding(16.dp)
-    ){
-        IconButton(onClick = { expanded =! expanded }) {
-            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.action_settings) )
-        }
-        DropdownMenu(
-            expanded = expanded, onDismissRequest = {expanded = false}
-        ) {
-            DropdownMenuItem(
-                text= {Text(stringResource(R.string.actions_eettings))},
-                onClick = {
-
-                }
-            )
-        }
-    }
-
-
-}
 @Composable
 fun MainScreen (){
-
-
-    DropMenuSettings()
     LazyGridForButtonsMain()
 }
