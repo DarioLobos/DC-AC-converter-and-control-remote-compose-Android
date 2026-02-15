@@ -22,6 +22,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 
 var devices: List <Devices>?= null
 var devicesDao: DaoDevices?= null
@@ -193,7 +195,7 @@ fun ConstraionWithButtonsOnOff(device_number:Int, device_name:String) {
     }
 
 }
-
+@Preview(name = "lazy grid")
 @Composable
 fun LazyGridForButtonsMain(){
 
@@ -208,7 +210,7 @@ fun LazyGridForButtonsMain(){
             }
         }
     }
-
+@Preview(name = "MainScreen")
 @Composable
 fun MainScreen (){
     LazyGridForButtonsMain()
