@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.*
 import android.content.Context
+import android.content.res.Resources
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.ui.unit.dp
@@ -21,7 +22,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
-
 
 var devices: List <Devices>?= null
 var devicesDao: DaoDevices?= null
@@ -108,7 +108,7 @@ suspend fun deviceListInit() {
 
             devicesSet(context, qty_devices)
             val deleted = devices - qty_devices
-            val toast_message: String = "$deleted S{R.string.devices_deleted_toast}"
+            val toast_message: String = "$deleted " + Resources.getSystem().getString((R.string.devices_added_toast))
             Toast.makeText(context, toast_message, Toast.LENGTH_SHORT).show()
 
         } else if (devices < qty_devices) {
@@ -117,9 +117,9 @@ suspend fun deviceListInit() {
                 devicesDao?.insert(Devices(i, "Devices $i"))
             }
             val added = qty_devices - devices
-            val toast_message: String = "$added S{R.string.devices_added_toast}"
+            val toast_message: String = "$added " + Resources.getSystem().getString((R.string.devices_added_toast))
             Toast.makeText(context, toast_message, Toast.LENGTH_SHORT).show()
-            // pending add more
+
 
         }
     }

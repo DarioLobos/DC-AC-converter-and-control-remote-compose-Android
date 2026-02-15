@@ -48,6 +48,7 @@
     <string name="timeOn">Time ON:</string>
     <string name="timeOFF">Time OFF:</string>
     <string name="click">Click to set</string>
-
-
+    <string name="confirm">Confirm Selection</string>
+    <string name="cancel">Dismiss</string>
+    <string name="setTimeCancel">Setup time cancelled</string>
 </resources>

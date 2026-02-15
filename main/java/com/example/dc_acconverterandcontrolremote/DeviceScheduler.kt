@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.dc_acconverterandcontrolremote
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -9,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.*
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.*
@@ -16,69 +19,124 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
-import android.app.TimePickerDialog
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import java.util.*
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.material3.TextField
 
+var selectedTime: TimePickerState? by remember { mutableStateOf(null)}
 
-    @Composable
-    fun EditTextONOFF(context: Context, device_number : Int, on_or_off : String, modifier: Modifier) {
+@Composable
+fun TimePickerDialog(context: Context, hourSet : Int?, minuteSet : Int?) {
 
-        val calendar = Calendar.getInstance()
-        val hourNnw = calendar[Calendar.HOUR_OF_DAY]
-        val minuteNow = calendar[Calendar.MINUTE]
-        var hourSet: Int? = 12
-        var minuteSet: Int? = 0
-        var timeToShow: String =""
-        val string_onoff:String = stringResource(R.string.ON)
+    var showTimePicker by remember { mutableStateOf(true) }
+    val calendar = Calendar.getInstance()
+    var hourForPicker: Int = hourSet ?: calendar[Calendar.HOUR_OF_DAY]
+    var minuteForPicker: Int = minuteSet ?: calendar[Calendar.MINUTE]
 
-        TextField(
-            colors= MaterialTheme.colorScheme.onPrimary,
-            readOnly = false,
-            enabled = false,
-            Value= timeToShow,
-            label =  Text(on_or_off) ,
-            lineLimits = TextFieldLineLimits.SingleLine,
-            placeholder = Text(stringResource(R.string.click)),
-            Modifier= Modifier.clickable{
+    val timePickerState = rememberTimePickerState(
+        initialHour = hourForPicker,
+        initialMinute = minuteForPicker,
+        is24Hour = true
+    )
 
-                val timePickerDialog = TimePickerDialog(
-                    context,
-                    { _, selectedHour: Int, selectedMinute: Int ->
-                        hourSet = selectedHour
-                        minuteSet = selectedMinute
-                    },
-                    hourNnw, // Current hour
-                    minuteNow, // Current minute
-                    false // false = 12-hour format
-                )
+    Box(propagateMinConstraints = false) {
 
-                val device: List<Devices> = devicesDao?.getItem(device_number) as List<Devices>
-                if (on_or_off == string_onoff ) {
-                    device.get(0).hour_on = hourSet
-                    device.get(0).minutes_on = minuteSet
-                } else {
-                    device.get(0).hour_off = hourSet
-                    device.get(0).minutes_off = minuteSet
-                }
-                timeToShow= "$hourSet : $minuteSet"
+        if (showTimePicker) {
+
+            TimePicker(
+                state = timePickerState,
+                Modifier.fillMaxSize()
+            )
+            Button(
+
+                onClick = {
+                    showTimePicker = false
+                    Toast.makeText(context, R.string.setTimeCancel, Toast.LENGTH_SHORT).show()
+                })
+            {
+                Text(stringResource(R.string.cancel))
             }
-        )
+
+            Button(
+                onClick = {
+                    selectedTime = timePickerState
+                    showTimePicker = false
+                    Toast.makeText(context, R.string.setTimeCancel, Toast.LENGTH_SHORT).show()
+                }) {
+                Text(stringResource(R.string.confirm))
+            }
+        }
     }
 
-    @Composable
-    fun ConstrainWithEditTextOnOff(context:Context, device_number:Int, device_name:String) {
 
-        ConstraintLayout(Modifier
-            .wrapContentSize()
-            .background(color = MaterialTheme.colorScheme.background)) {
+
+    @Composable
+    fun EditTextONOFF(context: Context, device_number: Int, on_or_off: String, modifier: Modifier) {
+
+        var hourSet: Int? = 12
+        var minuteSet: Int? = 0
+        var timeToShow: String = ""
+        val string_onoff: String = stringResource(R.string.ON)
+
+        val device: List<Devices> = devicesDao?.getItem(device_number) as List<Devices>
+
+
+        if (on_or_off == string_onoff) {
+            hourSet = device.get(0).hour_on
+            minuteSet = device.get(0).minutes_on
+            timeToShow = "$hourSet : $minuteSet"
+        } else {
+            hourSet = device.get(0).hour_off
+            minuteSet = device.get(0).minutes_off
+            timeToShow = "$hourSet : $minuteSet"
+        }
+
+
+        TextField(
+            readOnly = false,
+            enabled = false,
+            value = timeToShow,
+            label = Text(on_or_off),
+            placeholder = Text(stringResource(R.string.click)),
+            modifier = Modifier.clickable {
+
+                TimePickerDialog(context, hourSet, minuteSet)
+
+
+            }
+        )
+
+        if (selectedTime != null) {
+
+            if (on_or_off == string_onoff) {
+                device.get(0).hour_on = selectedTime!!.hour
+                device.get(0).minutes_on = selectedTime!!.minute
+            } else {
+                device.get(0).hour_off = hourSet
+                device.get(0).minutes_off = minuteSet
+            }
+            timeToShow = "$hourSet : $minuteSet"
+        }
+    }
+
+
+    @Composable
+    fun ConstrainWithEditTextOnOff(context: Context, device_number: Int, device_name: String) {
+
+        ConstraintLayout(
+            Modifier
+                .wrapContentSize()
+                .background(color = MaterialTheme.colorScheme.background)
+        ) {
 
             val on: String = stringResource(R.string.ON)
             val off: String = stringResource(R.string.OFF)
-            val (editOn, editOff, titleName,timeOn,timeOff, daysOfWeek) = createRefs()
+            val (editOn, editOff, titleName, timeOn, timeOff, daysOfWeek) = createRefs()
 
             val modifierText: Modifier = Modifier
                 .constrainAs(titleName) {
@@ -121,44 +179,53 @@ import androidx.compose.material3.TextField
             val modifierRButtonDaysOfWeek = Modifier
                 .wrapContentSize()
                 .constrainAs(daysOfWeek) {
-                top.linkTo(editOn.bottom, margin = 5.dp)
-                bottom.linkTo(parent.bottom, margin = 5.dp)
+                    top.linkTo(editOn.bottom, margin = 5.dp)
+                    bottom.linkTo(parent.bottom, margin = 5.dp)
                     centerHorizontallyTo(parent)
-            }
+                }
 
 
-            Text(text = device_name,
-                color= MaterialTheme.colorScheme.onPrimary,
+            Text(
+                text = device_name,
+                color = MaterialTheme.colorScheme.onPrimary,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = modifierText)
-            Text(text = stringResource(R.string.timeOn),
-                color= MaterialTheme.colorScheme.onPrimary,
+                modifier = modifierText
+            )
+            Text(
+                text = stringResource(R.string.timeOn),
+                color = MaterialTheme.colorScheme.onPrimary,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                modifier = modifierTextON)
-            Text(text = device_name,
-                color= MaterialTheme.colorScheme.onPrimary,
+                modifier = modifierTextON
+            )
+            Text(
+                text = device_name,
+                color = MaterialTheme.colorScheme.onPrimary,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = modifierTextOFF)
-            EditTextONOFF(context,device_number, on, modifierEditOn)
+                modifier = modifierTextOFF
+            )
+            EditTextONOFF(context, device_number, on, modifierEditOn)
             EditTextONOFF(context, device_number, off, modifierEditOff)
             createHorizontalChain(
                 editOn, editOff,
                 chainStyle = ChainStyle.SpreadInside
             )
 
-            var days_Selected:Int =0
+            var days_Selected: Int = 0
 
-            val selectedOptions = remember { mutableStateListOf(false, false, false,false,false,false,false)}
+            val selectedOptions =
+                remember { mutableStateListOf(false, false, false, false, false, false, false) }
 
-            val options = listOf(stringResource(R.string.Sun), stringResource(R.string.Mon),
-                stringResource(R.string.Tue),stringResource(R.string.Wed),
-                stringResource(R.string.Thu),stringResource(R.string.Fri),
-                stringResource(R.string.Sat))
+            val options = listOf(
+                stringResource(R.string.Sun), stringResource(R.string.Mon),
+                stringResource(R.string.Tue), stringResource(R.string.Wed),
+                stringResource(R.string.Thu), stringResource(R.string.Fri),
+                stringResource(R.string.Sat)
+            )
 
-                MultiChoiceSegmentedButtonRow(modifier = modifierRButtonDaysOfWeek) {
+            MultiChoiceSegmentedButtonRow(modifier = modifierRButtonDaysOfWeek) {
                 options.forEachIndexed { index, label ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
@@ -172,58 +239,66 @@ import androidx.compose.material3.TextField
                         label = {
                             when (label) {
                                 options[0] ->
-                                    if(selectedOptions[index]==true){
-                                        days_Selected= days_Selected or 1
-                                    }else{
-                                        days_Selected= (days_Selected and (1).inv())
+                                    if (selectedOptions[index] == true) {
+                                        days_Selected = days_Selected or 1
+                                    } else {
+                                        days_Selected = (days_Selected and (1).inv())
                                     }
+
                                 options[1] ->
-                                        if(selectedOptions[index]==true){
-                                            days_Selected= days_Selected or 2
-                                        }else{
-                                            days_Selected= (days_Selected and (2).inv())
-                                        }
+                                    if (selectedOptions[index] == true) {
+                                        days_Selected = days_Selected or 2
+                                    } else {
+                                        days_Selected = (days_Selected and (2).inv())
+                                    }
+
                                 options[2] ->
-                                    if(selectedOptions[index]==true){
-                                        days_Selected= days_Selected or 4
-                                    }else{
-                                        days_Selected= (days_Selected and (4).inv())
+                                    if (selectedOptions[index] == true) {
+                                        days_Selected = days_Selected or 4
+                                    } else {
+                                        days_Selected = (days_Selected and (4).inv())
                                     }
+
                                 options[3] ->
-                                    if(selectedOptions[index]==true){
-                                        days_Selected= days_Selected or 8
-                                    }else{
-                                        days_Selected= (days_Selected and (8).inv())
+                                    if (selectedOptions[index] == true) {
+                                        days_Selected = days_Selected or 8
+                                    } else {
+                                        days_Selected = (days_Selected and (8).inv())
                                     }
+
                                 options[4] ->
-                                    if(selectedOptions[index]==true){
-                                        days_Selected= days_Selected or 16
-                                    }else{
-                                        days_Selected= (days_Selected and (16).inv())
+                                    if (selectedOptions[index] == true) {
+                                        days_Selected = days_Selected or 16
+                                    } else {
+                                        days_Selected = (days_Selected and (16).inv())
                                     }
+
                                 options[5] ->
-                                    if(selectedOptions[index]==true){
-                                        days_Selected= days_Selected or 32
-                                    }else{
-                                        days_Selected= (days_Selected and (32).inv())
+                                    if (selectedOptions[index] == true) {
+                                        days_Selected = days_Selected or 32
+                                    } else {
+                                        days_Selected = (days_Selected and (32).inv())
                                     }
+
                                 options[6] ->
-                                    if(selectedOptions[index]==true){
-                                        days_Selected= days_Selected or 64
-                                    }else{
-                                        days_Selected= (days_Selected and (64).inv())
+                                    if (selectedOptions[index] == true) {
+                                        days_Selected = days_Selected or 64
+                                    } else {
+                                        days_Selected = (days_Selected and (64).inv())
                                     }
+
                                 options[7] ->
-                                    if(selectedOptions[index]==true){
-                                        days_Selected= days_Selected or 128
-                                    }else{
-                                        days_Selected= (days_Selected and (128).inv())
+                                    if (selectedOptions[index] == true) {
+                                        days_Selected = days_Selected or 128
+                                    } else {
+                                        days_Selected = (days_Selected and (128).inv())
                                     }
 
                             }
 
-                            val device: List<Devices> = devicesDao?.getItem(device_number) as List<Devices>
-                                device.get(0).days_week = days_Selected
+                            val device: List<Devices> =
+                                devicesDao?.getItem(device_number) as List<Devices>
+                            device.get(0).days_week = days_Selected
 
                         }
                     )
@@ -233,24 +308,25 @@ import androidx.compose.material3.TextField
         }
 
 
-        }
-
+    }
 
 
     @Composable
-    fun DeviceScheduler_Screen(context: Context){
+    fun DeviceScheduler_Screen(context: Context) {
 
         val devicesListSize: Int = deviceList()?.size ?: 0
 
-        LazyVerticalGrid(columns = GridCells.Fixed(2),Modifier
-            .wrapContentSize()
-            .fillMaxWidth(),
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2), Modifier
+                .wrapContentSize()
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            items(devicesListSize){
-                ConstrainWithEditTextOnOff(context,it, deviceName(it)?:"" )
+            items(devicesListSize) {
+                ConstrainWithEditTextOnOff(context, it, deviceName(it) ?: "")
             }
         }
     }
+}
 
