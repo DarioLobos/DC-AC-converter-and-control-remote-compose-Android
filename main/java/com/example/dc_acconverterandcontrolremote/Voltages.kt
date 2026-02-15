@@ -1,5 +1,4 @@
 package com.example.dc_acconverterandcontrolremote
-package com.example.dc_acconverterandcontrolremote
 import com.example.dc_acconverterandcontrolremote.R
 import android.os.Bundle
 import androidx.activity.ComponentActivity

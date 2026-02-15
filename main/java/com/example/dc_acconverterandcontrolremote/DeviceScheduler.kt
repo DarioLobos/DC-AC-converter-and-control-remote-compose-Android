@@ -23,77 +23,20 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import java.util.*
 
-
-
-@Composable
-fun TimePickerDialog(context: Context, hourSet : Int?, minuteSet : Int?, timeToShow:String) {
-
-    var selectedTime: TimePickerState? by remember { mutableStateOf(null)}
-    var showTimePicker by remember { mutableStateOf(true) }
-    val calendar = Calendar.getInstance()
-    val hourForPicker: Int = hourSet ?: calendar[Calendar.HOUR_OF_DAY]
-    val minuteForPicker: Int = minuteSet ?: calendar[Calendar.MINUTE]
-
-    val timePickerState = rememberTimePickerState(
-        initialHour = hourForPicker,
-        initialMinute = minuteForPicker,
-        is24Hour = true
-    )
-
-    Box(propagateMinConstraints = false) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
-
-            Button(
-                onClick = { showTimePicker = true }
-
-            ) {
-                Text(timeToShow)
-            }
-
-            if (showTimePicker) {
-
-                TimePicker(
-                    state = timePickerState,
-                    Modifier.fillMaxSize()
-                )
-                Button(
-
-                    onClick = {
-                        showTimePicker = false
-                        Toast.makeText(context, R.string.setTimeCancel, Toast.LENGTH_SHORT).show()
-                    })
-                {
-                    Text(stringResource(R.string.cancel))
-                }
-
-                Button(
-                    onClick = {
-                        selectedTime = timePickerState
-                        showTimePicker = false
-                        Toast.makeText(context, R.string.setTimeCancel, Toast.LENGTH_SHORT).show()
-                    }) {
-                    Text(stringResource(R.string.confirm))
-                }
-            }
-        }
-
-    }
-
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun EditTextONOFF(context: Context, device_number: Int, on_or_off: String, modifier: Modifier) {
 
         var hourSet: Int? = 12
         var minuteSet: Int? = 0
         var timeToShow: String = stringResource(R.string.click)
-        val string_onoff: String = stringResource(R.string.ON)
-
+        var selectedTime: TimePickerState? by remember { mutableStateOf(null) }
+        var showTimePicker by remember { mutableStateOf(true) }
+        val calendar = Calendar.getInstance()
+        val hourForPicker: Int = hourSet ?: calendar[Calendar.HOUR_OF_DAY]
+        val minuteForPicker: Int = minuteSet ?: calendar[Calendar.MINUTE]
         val device: List<Devices> = devicesDao?.getItem(device_number) as List<Devices>
+        val string_onoff: String = stringResource(R.string.ON)
 
 
         if (on_or_off == string_onoff) {
@@ -106,18 +49,66 @@ fun TimePickerDialog(context: Context, hourSet : Int?, minuteSet : Int?, timeToS
             timeToShow = "$hourSet : $minuteSet"
         }
 
-        TimePickerDialog(context, hourSet, minuteSet, timeToShow)
+        val timePickerState = rememberTimePickerState(
+            initialHour = hourForPicker,
+            initialMinute = minuteForPicker,
+            is24Hour = true
+        )
 
-        if (selectedTime != null) {
+        Box(propagateMinConstraints = false) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
 
-            if (on_or_off == string_onoff) {
-                device.get(0).hour_on = selectedTime!!.hour
-                device.get(0).minutes_on = selectedTime!!.minute
-            } else {
-                device.get(0).hour_off = hourSet
-                device.get(0).minutes_off = minuteSet
+                Button(
+                    onClick = { showTimePicker = true }
+
+                ) {
+                    Text(timeToShow)
+                }
+
+                if (showTimePicker) {
+
+                    TimePicker(
+                        state = timePickerState,
+                        Modifier.fillMaxSize()
+                    )
+                    Button(
+
+                        onClick = {
+                            showTimePicker = false
+                            Toast.makeText(context, R.string.setTimeCancel, Toast.LENGTH_SHORT).show()
+                        })
+                    {
+                        Text(stringResource(R.string.cancel))
+                    }
+
+                    Button(
+                        onClick = {
+                            selectedTime = timePickerState
+                            showTimePicker = false
+                            Toast.makeText(context, R.string.setTimeCancel, Toast.LENGTH_SHORT).show()
+                        }) {
+                        Text(stringResource(R.string.confirm))
+
+                        if (selectedTime != null) {
+
+                            if (on_or_off == string_onoff) {
+                                device.get(0).hour_on = selectedTime!!.hour
+                                device.get(0).minutes_on = selectedTime!!.minute
+                            } else {
+                                device.get(0).hour_off = hourSet
+                                device.get(0).minutes_off = minuteSet
+                            }
+                            timeToShow = "$hourSet : $minuteSet"
+                        }
+                    }
+                }
             }
-            timeToShow = "$hourSet : $minuteSet"
         }
     }
 
@@ -197,7 +188,7 @@ fun TimePickerDialog(context: Context, hourSet : Int?, minuteSet : Int?, timeToS
                 modifier = modifierTextON
             )
             Text(
-                text = device_name,
+                text = stringResource(R.string.timeOFF),
                 color = MaterialTheme.colorScheme.onPrimary,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
@@ -325,5 +316,5 @@ fun TimePickerDialog(context: Context, hourSet : Int?, minuteSet : Int?, timeToS
             }
         }
     }
-}
+
 
