@@ -25,9 +25,9 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.DevicesDataBase
 
 var devices: List <Devices>?= null
-var devicesDao: DaoDevices?= null
 
 private val Context.myDataStore by preferencesDataStore(name = "settings")
 
@@ -37,18 +37,12 @@ val NUMBER_DEVICES = intPreferencesKey("number_deices")
 
 const val default_nbr_devices:Int = 8
 
-override val DevicesRepository: DevicesRepository by lazy {
-    OfflineDevicesRepository(DevicesDatabase.getDatabase(context).DaoDevices())
+var devicesDao: DaoDevices= DevicesDataBase().daoDevices()
+
+override val devicesRepository: DevicesRepository by lazy {
+    OfflineDevicesRepository(DevicesDatabase.DevicesDataBase().daoDevices())
 }
 
-@Composable
-fun DevicesDataBase () {
-
-    val db = Room.databaseBuilder(
-        LocalContext.current, DevicesDatabase::class.java, "DEVICES"
-    ).build()
-    devicesDao = db.daoDevices()
-}
 
 @Composable
 suspend fun DevicesSet(nbr_devices:Int) {
@@ -76,9 +70,7 @@ suspend fun IPAddressSet(ip_address:Int) {
 
 suspend fun devicesInit(context: Context) {
 
-    devicesSet(
-        context,
-        default_nbr_devices)
+    devicesSet(default_nbr_devices)
 }
 
 suspend fun deviceListInit() {

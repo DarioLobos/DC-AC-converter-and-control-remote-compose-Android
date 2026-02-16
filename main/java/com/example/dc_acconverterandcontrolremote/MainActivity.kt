@@ -22,7 +22,6 @@ class MainActivity : ComponentActivity() {
             DC_ACConverterAndControlRemoteTheme {
             }
         }
-        Context = LocalContext.current
 
 
         lifecycleScope.launch {
@@ -30,8 +29,7 @@ class MainActivity : ComponentActivity() {
             // and cancel it when the lifecycle goes below CREATED (i.e., DESTROYED)
             repeatOnLifecycle(Lifecycle.State.CREATED) {
                 if (devicesDao == null) {
-                    devicesInit(context)
-                    devicesDataBase(context)
+                    devicesInit()
                     deviceListInit()
                 }
             }
