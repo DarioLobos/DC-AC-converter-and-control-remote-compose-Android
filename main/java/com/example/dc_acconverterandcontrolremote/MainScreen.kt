@@ -37,6 +37,10 @@ val NUMBER_DEVICES = intPreferencesKey("number_deices")
 
 const val default_nbr_devices:Int = 8
 
+override val DevicesRepository: DevicesRepository by lazy {
+    OfflineDevicesRepository(DevicesDatabase.getDatabase(context).DaoDevices())
+}
+
 @Composable
 fun DevicesDataBase () {
 

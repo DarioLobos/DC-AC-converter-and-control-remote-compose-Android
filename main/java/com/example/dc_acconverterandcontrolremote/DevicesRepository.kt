@@ -6,31 +6,31 @@ interface DevicesRepository {
     /**
      * Repository that provides insert, update, delete, and retrieve of [Item] from a given data source.
      */
-    interface ItemsRepository {
+    interface DevicesRepository {
         /**
          * Retrieve all the items from the the given data source.
          */
-        fun getAllItemsStream(): Flow<List<Devices>>
+        fun getAllDevicesStream(): Flow<Devices>
 
         /**
          * Retrieve an item from the given data source that matches with the [id].
          */
-        fun getItemStream(id: Int): Flow<Devices?>
+        fun getDeviceStream(deviceId: Int): Flow<Devices?>
 
         /**
          * Insert item in the data source
          */
-        suspend fun insertItem(item: Devices)
+        suspend fun insertDevice(device: Devices)
 
         /**
          * Delete item from the data source
          */
-        suspend fun deleteItem(item: Devices)
+        suspend fun deleteDevice(device: Devices)
 
         /**
          * Update item in the data source
          */
-        suspend fun updateItem(item: Devices)
+        suspend fun updateDevice(device: Devices)
     }
 
 }

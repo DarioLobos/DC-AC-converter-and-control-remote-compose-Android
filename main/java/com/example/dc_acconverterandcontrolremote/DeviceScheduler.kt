@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import java.util.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.clickable
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -66,13 +67,26 @@ import androidx.compose.ui.platform.LocalContext
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
+                showTimePicker = true
 
-                Button(
-                    onClick = { showTimePicker = true }
+                // Source - https://stackoverflow.com/a/79889530
+// Posted by tyg, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-02-16, License - CC BY-SA 4.0
 
-                ) {
-                    Text(timeToShow)
-                }
+                TextField(
+                    // colors = MaterialTheme.colorScheme.onPrimary,
+                    readOnly = false,
+                    enabled = false,
+                    value = timeToShow,
+                    onValueChange = { /* ... */ },
+                    label = { Text(on_or_off) },
+                    singleLine = true,
+                    placeholder = { Text(stringResource(R.string.click)) },
+                    modifier = Modifier.clickable {
+                        showTimePicker = true
+                    },
+                )
+
 
                 if (showTimePicker) {
 

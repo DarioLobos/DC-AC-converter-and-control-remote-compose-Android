@@ -1,14 +1,16 @@
 package com.example.dc_acconverterandcontrolremote
+
 import kotlinx.coroutines.flow.Flow
 
 class OfflineDevicesRepository(private val itemDao: DaoDevices) : DevicesRepository {
-    override fun getAllItemsStream(): Flow<List<Devices>> = DaoDevices.getAll()
+    override fun getAllDevicesStream(): Flow<List<Devices>> = DaoDevices.getAll()
 
-    override fun getItemStream(id: Int): Flow<Devices?> = DaoDevices.getItem(id)
+    override fun getDeviceStream(deviceId: Int): Flow<Devices?> = DaoDevices.getItem(deviceId)
 
-    override suspend fun insertItem(item: Devices) = itemDao.insert(item)
+    override suspend fun insertDevice(device: Devices) = DaoDevices.insert(device)
 
-    override suspend fun deleteItem(item: Devices) = itemDao.delete(item)
 
-    override suspend fun updateItem(item: Devices) = itemDao.update(item)
+    override suspend fun deleteDevice(device: Devices) = DaoDevices.delete(device)
+
+    override suspend fun updateDevice(device: Devices) = Devices.update(device)
 }
