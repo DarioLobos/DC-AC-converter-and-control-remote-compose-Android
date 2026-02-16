@@ -3,7 +3,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "devices")
-class Devices (
+data class Devices (
     @PrimaryKey(autoGenerate = true)
     val device_number: Int = 0,
     var device_name: String ="Device 0",

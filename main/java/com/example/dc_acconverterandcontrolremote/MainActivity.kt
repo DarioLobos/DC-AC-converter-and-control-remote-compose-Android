@@ -5,6 +5,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.dc_acconverterandcontrolremote.ui.theme.DC_ACConverterAndControlRemoteTheme
 import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -21,7 +22,7 @@ class MainActivity : ComponentActivity() {
             DC_ACConverterAndControlRemoteTheme {
             }
         }
-        val context: Context = applicationContext
+        Context = LocalContext.current
 
 
         lifecycleScope.launch {

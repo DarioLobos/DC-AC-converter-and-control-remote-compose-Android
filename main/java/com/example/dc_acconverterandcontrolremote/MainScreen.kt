@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.map
 import androidx.constraintlayout.compose.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -36,31 +37,34 @@ val NUMBER_DEVICES = intPreferencesKey("number_deices")
 
 const val default_nbr_devices:Int = 8
 
-fun devicesDataBase (context: Context) {
-
+@Composable
+fun DevicesDataBase () {
 
     val db = Room.databaseBuilder(
-        context, DevicesDatabase::class.java, "DEVICES"
+        LocalContext.current, DevicesDatabase::class.java, "DEVICES"
     ).build()
     devicesDao = db.daoDevices()
 }
 
-suspend fun devicesSet(context: Context, nbr_devices:Int) {
-    context.myDataStore.edit {
+@Composable
+suspend fun DevicesSet(nbr_devices:Int) {
+    LocalContext.current.myDataStore.edit {
         it[NUMBER_DEVICES]=nbr_devices
     }
-    Toast.makeText(context,R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT)
+    Toast.makeText(LocalContext.current,R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT)
 }
 
-suspend fun macAddressSet(context: Context, mac_address:Int) {
-    context.myDataStore.edit {
+@Composable
+suspend fun macAddressSet(mac_address:Int) {
+    LocalContext.current.myDataStore.edit {
         it[MAC_ADDRESS]=mac_address
     }
-    Toast.makeText(context,R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
+    Toast.makeText(LocalContext.current,R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
 }
 
-suspend fun IPAddressSet(context: Context, ip_address:Int) {
-    context.myDataStore.edit {
+@Composable
+suspend fun IPAddressSet(ip_address:Int) {
+    LocalContext.current.myDataStore.edit {
         it[IP_ADDRESS]=ip_address
     }
     Toast.makeText(context,R.string.toast_set_IP, Toast.LENGTH_SHORT).show()
@@ -108,7 +112,7 @@ suspend fun deviceListInit() {
                 devicesDao?.delete((devicesDao?.getItem(i) as List<Devices>).get(0))
             }
 
-            devicesSet(context, qty_devices)
+            DevicesSet(qty_devices)
             val deleted = devices - qty_devices
             val toast_message: String = "$deleted " + Resources.getSystem().getString((R.string.devices_added_toast))
             Toast.makeText(context, toast_message, Toast.LENGTH_SHORT).show()
