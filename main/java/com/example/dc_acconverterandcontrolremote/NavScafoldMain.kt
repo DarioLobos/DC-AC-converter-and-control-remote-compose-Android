@@ -1,4 +1,5 @@
 package com.example.dc_acconverterandcontrolremote
+import android.content.Context
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
@@ -34,7 +35,7 @@ enum class MenuList(
 
 
 @Composable
-fun MainApp(){
+fun MainApp(context: Context){
     var currentDestination by rememberSaveable { mutableStateOf(MenuList.HOME)}
     val scope = rememberCoroutineScope()
 
@@ -59,7 +60,7 @@ fun MainApp(){
     ){
         val context = LocalContext.current
         when (currentDestination) {
-            MenuList.HOME -> MainScreen ()
+            MenuList.HOME -> MainScreen (context)
             MenuList.VOLTAGES -> Voltage_Screen()
             MenuList.CHARGERSCHEDULER -> ChargerScheduler_Screen()
             MenuList.DEVICESSCHEDULER -> DeviceScheduler_Screen(context)

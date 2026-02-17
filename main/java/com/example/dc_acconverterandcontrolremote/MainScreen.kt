@@ -14,17 +14,17 @@ import android.content.res.Resources
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import androidx.constraintlayout.compose.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.room.Room
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.DevicesDataBase
 
 var devices: List <Devices>?= null
@@ -37,88 +37,81 @@ val NUMBER_DEVICES = intPreferencesKey("number_deices")
 
 const val default_nbr_devices:Int = 8
 
-var devicesDao: DaoDevices= DevicesDataBase().daoDevices()
 
-override val devicesRepository: DevicesRepository by lazy {
-    OfflineDevicesRepository(DevicesDatabase.DevicesDataBase().daoDevices())
+
+lateinit var devicesDao: DaoDevices
+
+
+suspend fun devicesSet(nbr_devices:Int, context: Context) {
+        context.myDataStore.edit {
+            it[NUMBER_DEVICES] = nbr_devices
+        }
+    Toast.makeText(context ,R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT).show()
 }
 
 
-@Composable
-suspend fun DevicesSet(nbr_devices:Int) {
-    LocalContext.current.myDataStore.edit {
-        it[NUMBER_DEVICES]=nbr_devices
+suspend fun macAddressSet(macaddress:Int, context: Context) {
+    context.myDataStore.edit {
+        it[MAC_ADDRESS]=macaddress
     }
-    Toast.makeText(LocalContext.current,R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT)
+    Toast.makeText(context,R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
 }
 
-@Composable
-suspend fun macAddressSet(mac_address:Int) {
-    LocalContext.current.myDataStore.edit {
-        it[MAC_ADDRESS]=mac_address
-    }
-    Toast.makeText(LocalContext.current,R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
-}
 
-@Composable
-suspend fun IPAddressSet(ip_address:Int) {
-    LocalContext.current.myDataStore.edit {
-        it[IP_ADDRESS]=ip_address
+suspend fun IPAddressSet(ipaddress:Int, context: Context) {
+    context.myDataStore.edit {
+        it[IP_ADDRESS]=ipaddress
     }
     Toast.makeText(context,R.string.toast_set_IP, Toast.LENGTH_SHORT).show()
 }
 
 suspend fun devicesInit(context: Context) {
 
-    devicesSet(default_nbr_devices)
+    devicesSet(default_nbr_devices, context)
 }
 
 suspend fun deviceListInit() {
     for (i in 0..default_nbr_devices) {
-        devicesDao?.insert(Devices(i, "Devices $i"))
+        devicesDao.insert(Devices(i, "Devices $i"))
     }
 }
 
     fun deviceList():List<Devices>? {
         if (devicesDao != null) {
-            return devicesDao?.getAll()
+            return devicesDao.getAll()
         }
         else return null
     }
 
-    fun deviceName(device_nbr:Int ):String? {
-        if (devicesDao != null) {
-            val device: List<Devices> = devicesDao?.getItem(device_nbr) as List<Devices>
-            val name: String = device.get(0).device_name
-            return name
-        } else {
-            return null
-        }
+    fun deviceName(devicenbr:Int ):String? {
+        val device: List<Devices> = devicesDao?.getItem(devicenbr) as List<Devices>
+        val name: String = device.get(0).device_name
+        return name
     }
 
 
-    suspend fun deviceListSizeUpdate(context: Context, qty_devices: Int) {
+    suspend fun deviceListSizeUpdate(context: Context, qtydevices: Int) {
         val devices: Int = context.myDataStore.data.map {
             it[NUMBER_DEVICES] ?: 0
         }.toString().toInt()
 
-        if (devices > qty_devices) {
+        if (devices > qtydevices) {
 
-            for (i in (devices - 1) downTo (qty_devices - 1)) {
-                devicesDao?.delete((devicesDao?.getItem(i) as List<Devices>).get(0))
+            for (i in (devices - 1) downTo (qtydevices - 1)) {
+                devicesDao.delete((devicesDao.getItem(i) as List<Devices>).get(0))
             }
 
-            DevicesSet(qty_devices)
-            val deleted = devices - qty_devices
+            devicesSet(qtydevices, context)
+            val deleted = devices - qtydevices
             val toast_message: String = "$deleted " + Resources.getSystem().getString((R.string.devices_added_toast))
             Toast.makeText(context, toast_message, Toast.LENGTH_SHORT).show()
 
-        } else if (devices < qty_devices) {
+        } else if (devices < qtydevices) {
 
-            for (i in devices..(qty_devices - 1)) {
-                devicesDao?.insert(Devices(i, "Devices $i"))
+            for (i in devices..(qtydevices - 1)) {
+                devicesDao.insert(Devices(i, "Devices $i"))
             }
-            val added = qty_devices - devices
+            val added = qtydevices - devices
             val toast_message: String = "$added " + Resources.getSystem().getString((R.string.devices_added_toast))
             Toast.makeText(context, toast_message, Toast.LENGTH_SHORT).show()
 
@@ -210,8 +203,24 @@ fun LazyGridForButtonsMain(){
             }
         }
     }
-@Preview(name = "MainScreen")
+
 @Composable
-fun MainScreen (){
+fun MainScreen (context: Context){
+    val devicesRepository: DevicesRepository by lazy {
+        OfflineDevicesRepository(DevicesDatabase.DevicesDataBase(context).daoDevices())
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(key1=Unit) {
+        runBlocking {
+            devicesDao= DevicesDataBase(context).daoDevices()
+            launch {
+                if (devicesDao.getAll().count() == 0) {
+                    devicesInit(context)
+                    deviceListInit()
+                }
+            }
+        }
+    }
     LazyGridForButtonsMain()
 }

@@ -8,20 +8,17 @@ import androidx.room.Room
 
 @Database(entities = arrayOf(Devices::class), version = 1, exportSchema = false)
 abstract class DevicesDatabase : RoomDatabase() {
-    abstract fun daoDevices(): DaoDevices
+abstract fun daoDevices(): DaoDevices
 
     companion object {
         @Volatile
-        private var Instance: DevicesDatabase? = null
+        private var devicesRepository: DevicesDatabase? = null
 
-        fun DevicesDataBase (): DevicesDatabase {
-            var context : Context?=null
-
-            // if the Instance is not null, return it, otherwise create a new database instance.
-            return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context.applicationContext , DevicesDataBase::class.java, "com.example.dc_acconverterandcontrolremote")
+        fun DevicesDataBase (context: Context): DevicesDatabase {
+            // if the Instance is not null, return it, otherwise create a new database instance.return devicesRepository ?: synchronized(this) {
+            return devicesRepository ?:   Room.databaseBuilder(context , DevicesDatabase::class.java, "devices_database")
                     .build()
-                    .also { Instance = it }
+                    .also { devicesRepository = it }
 
             }
         }

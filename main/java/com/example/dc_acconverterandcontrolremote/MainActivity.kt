@@ -24,22 +24,10 @@ class MainActivity : ComponentActivity() {
         }
 
 
-        lifecycleScope.launch {
-            // repeatOnLifecycle will run the block when the lifecycle is CREATED or above
-            // and cancel it when the lifecycle goes below CREATED (i.e., DESTROYED)
-            repeatOnLifecycle(Lifecycle.State.CREATED) {
-                if (devicesDao == null) {
-                    devicesInit()
-                    deviceListInit()
-                }
-            }
-
-        }
-
         setContent {
             DC_ACConverterAndControlRemoteTheme() {
 
-                MainApp()
+                MainApp(this)
 
             }
         }

@@ -3,17 +3,18 @@ import kotlinx.coroutines.flow.Flow
 
 interface DevicesRepository {
 
-        fun getAllDevicesStream(): Flow<List<Devices>>
 
-        fun getDeviceStream(deviceId: Int): Flow<Devices?>
+    public fun getAllDevicesStream(): Flow<List<Devices>>
 
-
-        suspend fun insertDevice(device: Devices)
+    public fun getDeviceStream(deviceId: Int): Flow<Devices?>
 
 
-        suspend fun deleteDevice(device: Devices)
+    public suspend fun insertDevice(device: Devices)
 
 
-        suspend fun updateDevice(device: Devices)
+    public suspend fun deleteDevice(device: Devices)
+
+
+    public suspend fun updateDevice(device: Devices)
 }
 
