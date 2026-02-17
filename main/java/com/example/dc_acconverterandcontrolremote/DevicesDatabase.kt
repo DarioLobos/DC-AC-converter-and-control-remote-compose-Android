@@ -23,4 +23,3 @@ abstract fun daoDevices(): DaoDevices
             }
         }
     }
-}

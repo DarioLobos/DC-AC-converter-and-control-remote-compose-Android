@@ -29,6 +29,8 @@ import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.Devi
 
 var devices: List <Devices>?= null
 
+
+
 private val Context.myDataStore by preferencesDataStore(name = "settings")
 
 val MAC_ADDRESS = intPreferencesKey("mac_address")
@@ -40,6 +42,7 @@ const val default_nbr_devices:Int = 8
 
 
 lateinit var devicesDao: DaoDevices
+
 
 
 suspend fun devicesSet(nbr_devices:Int, context: Context) {
@@ -206,21 +209,20 @@ fun LazyGridForButtonsMain(){
 
 @Composable
 fun MainScreen (context: Context){
-    val devicesRepository: DevicesRepository by lazy {
-        OfflineDevicesRepository(DevicesDatabase.DevicesDataBase(context).daoDevices())
-    }
 
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(key1=Unit) {
         runBlocking {
-            devicesDao= DevicesDataBase(context).daoDevices()
+
             launch {
+                devicesDao= DevicesDataBase(context).daoDevices()
+                }
                 if (devicesDao.getAll().count() == 0) {
                     devicesInit(context)
                     deviceListInit()
                 }
             }
         }
-    }
+
     LazyGridForButtonsMain()
 }

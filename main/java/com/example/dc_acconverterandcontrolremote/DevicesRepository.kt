@@ -3,7 +3,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface DevicesRepository {
 
-
     public fun getAllDevicesStream(): Flow<List<Devices>>
 
     public fun getDeviceStream(deviceId: Int): Flow<Devices?>

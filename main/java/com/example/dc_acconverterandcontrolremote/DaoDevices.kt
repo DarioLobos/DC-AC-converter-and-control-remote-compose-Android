@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.Update
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.*
 @Dao
 interface DaoDevices {
 
