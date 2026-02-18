@@ -26,32 +26,42 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import java.util.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.lifecycle.ViewModel
+
+@Composable
+fun dataFromViewModel(model: DeviceSchedulerViewModel){
+
+    val context: Context = LocalContext.current
+    var device_number:Int by model.device_number.observeASState(-1)
+
+    DeviceScheduler_Screen(context, model.days_Selected,
+        model.setDeviceNumber(device_number),
+        model.on_or_off, model.setOnorOff(),
+        ,model.hourSet, model.minuteSet,model.hourForPicker, model.minuteForPicker,
+        model.imesToshow, model.setselectedTime(),model.deviceName(),
+        model.selectedDays())
+
+}
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun EditTextONOFF(context: Context, device_number: Int, on_or_off: String, modifier: Modifier) {
+    fun EditTextONOFF(context: Context,device_number: Int, setdevice_number:(device_number: Int)->Unit,
+                      on_or_off:String,seton_or_off:(on_or_off:String)->Unit, modifier: Modifier,
+                      hourSet: Int, minuteSet: Int,hourForPicker: Int, minuteForPicker: Int,
+                      TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String?)-> String
+                      setselectedTime:(hourToSeT: Int, minuteToSet: Int, device_number: Int,
+                                       on_or_off: String, string_onoff: String)-> String) {
 
-        var hourSet: Int? = 12
-        var minuteSet: Int? = 0
-        var timeToShow: String = stringResource(R.string.click)
+        val string_onoff: String = stringResource(R.string.ON)
+        var timeToShow: String = TimesToshow(device_number,on_or_off,string_onoff)?:stringResource(R.string.click)
         var selectedTime: TimePickerState? by remember { mutableStateOf(null) }
         var showTimePicker by remember { mutableStateOf(true) }
         val calendar = Calendar.getInstance()
         val hourForPicker: Int = hourSet ?: calendar[Calendar.HOUR_OF_DAY]
         val minuteForPicker: Int = minuteSet ?: calendar[Calendar.MINUTE]
         val device: List<Devices> = devicesDao?.getItem(device_number) as List<Devices>
-        val string_onoff: String = stringResource(R.string.ON)
 
-
-        if (on_or_off == string_onoff) {
-            hourSet = device.get(0).hour_on
-            minuteSet = device.get(0).minutes_on
-            timeToShow = "$hourSet : $minuteSet"
-        } else {
-            hourSet = device.get(0).hour_off
-            minuteSet = device.get(0).minutes_off
-            timeToShow = "$hourSet : $minuteSet"
-        }
 
         val timePickerState = rememberTimePickerState(
             initialHour = hourForPicker,
@@ -106,23 +116,15 @@ import androidx.compose.foundation.clickable
 
                     Button(
                         onClick = {
-                            selectedTime = timePickerState
+                            if (timePickerState!=null){
+                            setselectedTime(timePickerState.hour, timePickerState.minute,
+                                device_number, on_or_off, string_onoff)}
                             showTimePicker = false
-                            Toast.makeText(context, R.string.setTimeCancel, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.setTimeRecorded, Toast.LENGTH_SHORT).show()
                         }) {
                         Text(stringResource(R.string.confirm))
 
-                        if (selectedTime != null) {
 
-                            if (on_or_off == string_onoff) {
-                                device.get(0).hour_on = selectedTime!!.hour
-                                device.get(0).minutes_on = selectedTime!!.minute
-                            } else {
-                                device.get(0).hour_off = hourSet
-                                device.get(0).minutes_off = minuteSet
-                            }
-                            timeToShow = "$hourSet : $minuteSet"
-                        }
                     }
                 }
             }
@@ -131,7 +133,13 @@ import androidx.compose.foundation.clickable
 
 
     @Composable
-    fun ConstrainWithEditTextOnOff(context: Context, device_number: Int, device_name: String) {
+    fun ConstrainWithEditTextOnOff(context: Context,device_number: Int, setdevice_number:(device_number: Int)->Unit,
+                                   on_or_off:String,seton_or_off:(on_or_off:String)->Unit,
+                                   hourSet: Int, minuteSet: Int,hourForPicker: Int, minuteForPicker: Int,
+                                   TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String?)-> String
+                                   setselectedTime:(hourToSeT: Int, minuteToSet: Int, device_number: Int, on_or_off: String, string_onoff: String)-> String,
+                                   deviceName:(device_number:Int)-> String, selectedDays:( option:Int, selectectOptions : Boolean)->Unit ) {
+
 
         ConstraintLayout(
             Modifier
@@ -191,7 +199,7 @@ import androidx.compose.foundation.clickable
 
 
             Text(
-                text = device_name,
+                text = deviceName(device_number),
                 color = MaterialTheme.colorScheme.onPrimary,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
@@ -211,8 +219,12 @@ import androidx.compose.foundation.clickable
                 fontWeight = FontWeight.Bold,
                 modifier = modifierTextOFF
             )
-            EditTextONOFF(context, device_number, on, modifierEditOn)
-            EditTextONOFF(context, device_number, off, modifierEditOff)
+            EditTextONOFF(context, device_number,setdevice_number, on, seton_or_off,
+                modifierEditOn, hourSet, minuteSet,hourForPicker, minuteForPicker,
+                TimesToshow,setselectedTime)
+            EditTextONOFF(context, device_number,setdevice_number, off,
+                seton_or_off, modifierEditOff, hourSet, minuteSet,hourForPicker,
+                minuteForPicker, TimesToshow,setselectedTime)
             createHorizontalChain(
                 editOn, editOff,
                 chainStyle = ChainStyle.SpreadInside
@@ -220,8 +232,6 @@ import androidx.compose.foundation.clickable
 
             var days_Selected: Int = 0
 
-            val selectedOptions =
-                remember { mutableStateListOf(false, false, false, false, false, false, false) }
 
             val options = listOf(
                 stringResource(R.string.Sun), stringResource(R.string.Mon),
@@ -230,7 +240,9 @@ import androidx.compose.foundation.clickable
                 stringResource(R.string.Sat)
             )
 
-            MultiChoiceSegmentedButtonRow(modifier = modifierRButtonDaysOfWeek) {
+            val selectedOptions= remember {mutableStateListOf(false, false, false, false, false, false, false)}
+
+                MultiChoiceSegmentedButtonRow(modifier = modifierRButtonDaysOfWeek) {
                 options.forEachIndexed { index, label ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
@@ -240,72 +252,13 @@ import androidx.compose.foundation.clickable
                         checked = selectedOptions[index],
                         onCheckedChange = {
                             selectedOptions[index] = !selectedOptions[index]
+                            setdevice_number(device_number)
+                            seton_or_off(on_or_off)
+                            selectedDays( index, selectedOptions[index])
                         },
-                        label = {
-                            when (label) {
-                                options[0] ->
-                                    if (selectedOptions[index] == true) {
-                                        days_Selected = days_Selected or 1
-                                    } else {
-                                        days_Selected = (days_Selected and (1).inv())
-                                    }
+                        label =
+                            {  }
 
-                                options[1] ->
-                                    if (selectedOptions[index] == true) {
-                                        days_Selected = days_Selected or 2
-                                    } else {
-                                        days_Selected = (days_Selected and (2).inv())
-                                    }
-
-                                options[2] ->
-                                    if (selectedOptions[index] == true) {
-                                        days_Selected = days_Selected or 4
-                                    } else {
-                                        days_Selected = (days_Selected and (4).inv())
-                                    }
-
-                                options[3] ->
-                                    if (selectedOptions[index] == true) {
-                                        days_Selected = days_Selected or 8
-                                    } else {
-                                        days_Selected = (days_Selected and (8).inv())
-                                    }
-
-                                options[4] ->
-                                    if (selectedOptions[index] == true) {
-                                        days_Selected = days_Selected or 16
-                                    } else {
-                                        days_Selected = (days_Selected and (16).inv())
-                                    }
-
-                                options[5] ->
-                                    if (selectedOptions[index] == true) {
-                                        days_Selected = days_Selected or 32
-                                    } else {
-                                        days_Selected = (days_Selected and (32).inv())
-                                    }
-
-                                options[6] ->
-                                    if (selectedOptions[index] == true) {
-                                        days_Selected = days_Selected or 64
-                                    } else {
-                                        days_Selected = (days_Selected and (64).inv())
-                                    }
-
-                                options[7] ->
-                                    if (selectedOptions[index] == true) {
-                                        days_Selected = days_Selected or 128
-                                    } else {
-                                        days_Selected = (days_Selected and (128).inv())
-                                    }
-
-                            }
-
-                            val device: List<Devices> =
-                                devicesDao?.getItem(device_number) as List<Devices>
-                            device.get(0).days_week = days_Selected
-
-                        }
                     )
                 }
             }
@@ -317,7 +270,13 @@ import androidx.compose.foundation.clickable
 
 
     @Composable
-    fun DeviceScheduler_Screen(context: Context) {
+    fun DeviceScheduler_Screen(context: Context,device_number: Int, setdevice_number:(device_number: Int)->Unit,
+                               on_or_off:String,seton_or_off:(on_or_off:String)->Unit,
+                               hourSet: Int, minuteSet: Int,hourForPicker: Int, minuteForPicker: Int,
+                               TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String?)-> String
+                               setselectedTime:(hourToSeT: Int, minuteToSet: Int, device_number: Int, on_or_off: String, string_onoff: String)-> String,
+                               deviceName:(device_number:Int)-> String, selectedDays:( option:Int, selectectOptions : Boolean)->Unit ) {
+
 
         val devicesListSize: Int = deviceList()?.size ?: 0
 
@@ -329,7 +288,11 @@ import androidx.compose.foundation.clickable
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             items(devicesListSize) {
-                ConstrainWithEditTextOnOff(context, it, deviceName(it) ?: "")
+                setdevice_number(it)
+                seton_or_off(on_or_off)
+                ConstrainWithEditTextOnOff(context, it, setdevice_number,on_or_off,
+                    seton_or_off,hourSet,minuteSet,hourForPicker,minuteForPicker,
+                    TimesToshow,setselectedTime, deviceName,selectedDays)
             }
         }
     }
