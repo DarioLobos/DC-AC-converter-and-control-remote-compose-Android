@@ -21,37 +21,42 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import java.util.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.modifier.modifierLocalConsumer
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import kotlin.Int
 
 @Composable
-fun dataFromViewModel(model: DeviceSchedulerViewModel){
+fun dataFromViewModel(model: DeviceSchedulerViewModel) {
 
     val context: Context = LocalContext.current
-    var device_number:Int by model.device_number.observeASState(-1)
 
-    DeviceScheduler_Screen(context, model.days_Selected,
-        model.setDeviceNumber(device_number),
-        model.on_or_off, model.setOnorOff(),
-        ,model.hourSet, model.minuteSet,model.hourForPicker, model.minuteForPicker,
-        model.imesToshow, model.setselectedTime(),model.deviceName(),
-        model.selectedDays())
+    val device_numberObserver = Observer<Int> {}
+    val on_or_offObserver = Observer<String> {}
+    val deviceObserver = Observer<String> {}
+    val hourSetObserver = Observer<Int> {}
+    val minuteSet = Observer<Int> {}
+
+
+    DeviceScheduler_Screen(
+        context, model.device_number, model::setdevice_number,
+        model.on_or_off, model::seton_or_off, model.hourSet, model.minuteSet,
+        model.hourForPicker, model.minuteForPicker, model::TimesToshow,
+        model::setselectedTime)
 
 }
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun EditTextONOFF(context: Context,device_number: Int, setdevice_number:(device_number: Int)->Unit,
-                      on_or_off:String,seton_or_off:(on_or_off:String)->Unit, modifier: Modifier,
-                      hourSet: Int, minuteSet: Int,hourForPicker: Int, minuteForPicker: Int,
-                      TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String?)-> String
-                      setselectedTime:(hourToSeT: Int, minuteToSet: Int, device_number: Int,
-                                       on_or_off: String, string_onoff: String)-> String) {
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditTextONOFF(context: Context,device_number: MutableLiveData<Int>, setdevice_number:(device_number: Int)->Unit,
+                  on_or_off:String,seton_or_off:(on_or_off:String)->Unit, modifier: Modifier,
+                  hourSet: MutableLiveData<Int>, minuteSet: MutableLiveData<Int>,hourForPicker: Int, minuteForPicker: Int,
+                  TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String?)-> String,
+                  setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_off: String,string_onoff: String)-> String) {
 
         val string_onoff: String = stringResource(R.string.ON)
         var timeToShow: String = TimesToshow(device_number,on_or_off,string_onoff)?:stringResource(R.string.click)
@@ -133,12 +138,11 @@ fun dataFromViewModel(model: DeviceSchedulerViewModel){
 
 
     @Composable
-    fun ConstrainWithEditTextOnOff(context: Context,device_number: Int, setdevice_number:(device_number: Int)->Unit,
-                                   on_or_off:String,seton_or_off:(on_or_off:String)->Unit,
-                                   hourSet: Int, minuteSet: Int,hourForPicker: Int, minuteForPicker: Int,
-                                   TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String?)-> String
-                                   setselectedTime:(hourToSeT: Int, minuteToSet: Int, device_number: Int, on_or_off: String, string_onoff: String)-> String,
-                                   deviceName:(device_number:Int)-> String, selectedDays:( option:Int, selectectOptions : Boolean)->Unit ) {
+    fun ConstrainWithEditTextOnOff(context: Context,device_number: MutableLiveData<Int>, setdevice_number:(device_number: Int)->Unit,
+                                   on_or_off:MutableLiveData<String>,seton_or_off:(on_or_off:String)->Unit, modifier: Modifier,
+                                   hourSet: MutableLiveData<Int>, minuteSet: MutableLiveData<Int>,hourForPicker: Int, minuteForPicker: Int,
+                                   TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String)-> String,
+                                   setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_off: String,string_onoff: String)-> String) {
 
 
         ConstraintLayout(
@@ -219,12 +223,16 @@ fun dataFromViewModel(model: DeviceSchedulerViewModel){
                 fontWeight = FontWeight.Bold,
                 modifier = modifierTextOFF
             )
-            EditTextONOFF(context, device_number,setdevice_number, on, seton_or_off,
-                modifierEditOn, hourSet, minuteSet,hourForPicker, minuteForPicker,
-                TimesToshow,setselectedTime)
-            EditTextONOFF(context, device_number,setdevice_number, off,
-                seton_or_off, modifierEditOff, hourSet, minuteSet,hourForPicker,
-                minuteForPicker, TimesToshow,setselectedTime)
+            EditTextONOFF(
+                context, device_number, setdevice_number, on, seton_or_off,
+                modifierEditOn, hourSet, minuteSet, hourForPicker, minuteForPicker,
+                TimesToshow, setselectedTime
+            )
+            EditTextONOFF(
+                context, device_number, setdevice_number, off,
+                seton_or_off, modifierEditOff, hourSet, minuteSet, hourForPicker,
+                minuteForPicker, TimesToshow, setselectedTime
+            )
             createHorizontalChain(
                 editOn, editOff,
                 chainStyle = ChainStyle.SpreadInside
@@ -240,9 +248,10 @@ fun dataFromViewModel(model: DeviceSchedulerViewModel){
                 stringResource(R.string.Sat)
             )
 
-            val selectedOptions= remember {mutableStateListOf(false, false, false, false, false, false, false)}
+            val selectedOptions =
+                remember { mutableStateListOf(false, false, false, false, false, false, false) }
 
-                MultiChoiceSegmentedButtonRow(modifier = modifierRButtonDaysOfWeek) {
+            MultiChoiceSegmentedButtonRow(modifier = modifierRButtonDaysOfWeek) {
                 options.forEachIndexed { index, label ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
@@ -254,10 +263,10 @@ fun dataFromViewModel(model: DeviceSchedulerViewModel){
                             selectedOptions[index] = !selectedOptions[index]
                             setdevice_number(device_number)
                             seton_or_off(on_or_off)
-                            selectedDays( index, selectedOptions[index])
+                            selectedDays(index, selectedOptions[index])
                         },
                         label =
-                            {  }
+                            { }
 
                     )
                 }
@@ -270,12 +279,11 @@ fun dataFromViewModel(model: DeviceSchedulerViewModel){
 
 
     @Composable
-    fun DeviceScheduler_Screen(context: Context,device_number: Int, setdevice_number:(device_number: Int)->Unit,
-                               on_or_off:String,seton_or_off:(on_or_off:String)->Unit,
-                               hourSet: Int, minuteSet: Int,hourForPicker: Int, minuteForPicker: Int,
-                               TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String?)-> String
-                               setselectedTime:(hourToSeT: Int, minuteToSet: Int, device_number: Int, on_or_off: String, string_onoff: String)-> String,
-                               deviceName:(device_number:Int)-> String, selectedDays:( option:Int, selectectOptions : Boolean)->Unit ) {
+    fun DeviceScheduler_Screen(context: Context,device_number: MutableLiveData<Int>, setdevice_number:(device_number: Int)->Unit,
+                               on_or_off:MutableLiveData<String>,seton_or_off:(on_or_off:String)->Unit,
+                               hourSet: MutableLiveData<Int>, minuteSet: MutableLiveData<Int>,hourForPicker: Int, minuteForPicker: Int,
+                               TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String)-> String,
+                               setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_off: String,string_onoff: String)-> String){
 
 
         val devicesListSize: Int = deviceList()?.size ?: 0
@@ -290,11 +298,14 @@ fun dataFromViewModel(model: DeviceSchedulerViewModel){
             items(devicesListSize) {
                 setdevice_number(it)
                 seton_or_off(on_or_off)
-                ConstrainWithEditTextOnOff(context, it, setdevice_number,on_or_off,
-                    seton_or_off,hourSet,minuteSet,hourForPicker,minuteForPicker,
-                    TimesToshow,setselectedTime, deviceName,selectedDays)
+                ConstrainWithEditTextOnOff(
+                    context, it, setdevice_number, on_or_off,
+                    seton_or_off, hourSet, minuteSet, hourForPicker, minuteForPicker,
+                    TimesToshow, setselectedTime, deviceName, selectedDays
+                )
             }
         }
     }
+
 
 

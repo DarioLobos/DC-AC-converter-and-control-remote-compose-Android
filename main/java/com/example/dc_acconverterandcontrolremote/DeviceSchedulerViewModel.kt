@@ -1,58 +1,47 @@
 package com.example.dc_acconverterandcontrolremote
 
-import androidx.compose.material3.TimePickerState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.MutableLiveData;
 import java.util.Calendar
 
 class DeviceSchedulerViewModel: ViewModel() {
 
-    var device_number by mutableStateOf(-1)
+    val device_number: MutableLiveData<Int> by lazy {
+        MutableLiveData<Int>()
+    }
 
-    var on_or_off by mutableStateOf("")
 
-    var device by mutableStateOf("")
+    val on_or_off: MutableLiveData<String> by lazy {
+        MutableLiveData<String>()
+    }
 
-    var hourSet by mutableStateOf(12)
-    var minuteSet by mutableStateOf(0)
+
+    val device: MutableLiveData<String> by lazy {
+        MutableLiveData<String>()
+    }
+
+    val hourSet: MutableLiveData<Int> by lazy {
+        MutableLiveData<Int>()
+    }
+
+    val minuteSet: MutableLiveData<Int> by lazy {
+        MutableLiveData<Int>()
+    }
     var calendar by mutableStateOf(Calendar.getInstance())
 
-    var hourForPicker by mutableStateOf(hourSet ?: calendar[Calendar.HOUR_OF_DAY])
+    var hourForPicker by mutableStateOf(calendar[Calendar.HOUR_OF_DAY])
 
-    var minuteForPicker by mutableStateOf(minuteSet ?: calendar[Calendar.MINUTE])
+    var minuteForPicker by mutableStateOf(calendar[Calendar.MINUTE])
 
-    var days_Selected by mutableStateOf(0)
-
-    var selectedTime by mutableStateOf(0)
-
-   fun setDeviceNumber(device_number:Int){
-        this.device_number =device_number
+    val days_Selected: MutableLiveData<Int> by lazy {
+        MutableLiveData<Int>()
     }
 
-    fun setOnorOff(on_or_off: String){
-        this.on_or_off =on_or_off
-    }
-
-    fun TimesToshow(device_number: Int, on_or_off: String, string_onoff: String): String {
-
-        val device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
-        var timeToShow: String = ""
-
-        if (on_or_off == string_onoff) {
-            hourSet = device.get(0).hour_on!!
-            minuteSet = device.get(0).minutes_on!!
-            timeToShow = "$hourSet : $minuteSet"
-        } else {
-            hourSet = device.get(0).hour_off!!
-            minuteSet = device.get(0).minutes_off!!
-            timeToShow = "$hourSet : $minuteSet"
-        }
-        return timeToShow
+    val selectedTime: MutableLiveData<Int> by lazy {
+        MutableLiveData<Int>()
     }
 
     fun deviceName(device_number: Int): String{
@@ -61,78 +50,149 @@ class DeviceSchedulerViewModel: ViewModel() {
         return   device.get(0).device_name
     }
 
+    fun seton_or_off(on_or_off: String){
+        this.on_or_off.setValue(on_or_off)
+    }
+    fun setdevice_number(device_number: Int){
+        this.device_number.setValue(device_number)
+    }
+
     fun setselectedTime(
         hourToSeT: Int,
         minuteToSet: Int,
         device_number: Int,
         on_or_off: String,
         string_onoff: String
-        ): String {
-            val device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
+    ): String {
 
-            if ((hourToSeT >= 0) and ((minuteToSet >= 0))) {
+        val device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
 
-                if (on_or_off == string_onoff) {
-                    device.get(0).hour_on = hourToSeT
-                    device.get(0).minutes_on = minuteToSet
-                } else {
-                    device.get(0).hour_off = hourToSeT
-                    device.get(0).minutes_off = minuteToSet
-                }
+        if ((hourToSeT >= 0) and ((minuteToSet >= 0))) {
+
+            if (on_or_off == string_onoff) {
+                device.get(0).hour_on = hourToSeT
+                device.get(0).minutes_on = minuteToSet
+            } else {
+                device.get(0).hour_off = hourToSeT
+                device.get(0).minutes_off = minuteToSet
             }
-            return "$hourSet : $minuteSet"
         }
+        return "$hourSet : $minuteSet"
+    }
+
+    fun setDeviceNumber(device_number:Int){
+        this.device_number.setValue(device_number)
+    }
+
+    fun setOnorOff(on_or_off: String){
+        this.on_or_off.setValue(on_or_off)
+    }
 
 
-    fun selectedDays( option: Int, selectedOptions: Boolean) {
+    fun TimesToshow(device_number: Int, on_or_off: String, string_onoff: String): String {
+
+        val device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
+        var timeToShow: String = ""
+
+        if (on_or_off == string_onoff) {
+            hourSet.setValue(device.get(0).hour_on!!)
+            minuteSet.setValue(device.get(0).minutes_on!!)
+            timeToShow = "$hourSet : $minuteSet"
+        } else {
+            hourSet.setValue(device.get(0).hour_off!!)
+            minuteSet.setValue(device.get(0).minutes_off!!)
+            timeToShow = "$hourSet : $minuteSet"
+        }
+        return timeToShow
+    }
+
+    fun setselectedTime(
+        hourToSeT: Int,
+        minuteToSet: Int,
+        device_number: Int,
+        on_or_off: String,
+        string_onoff: String
+    ): String {
+        val device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
+
+        if ((hourToSeT >= 0) and ((minuteToSet >= 0))) {
+
+            if (on_or_off == string_onoff) {
+                device.get(0).hour_on = hourToSeT
+                device.get(0).minutes_on = minuteToSet
+            } else {
+                device.get(0).hour_off = hourToSeT
+                device.get(0).minutes_off = minuteToSet
+            }
+        }
+        return "$hourSet : $minuteSet"
+    }
+
+
+    fun selectedDays(daysselected: Int, option: Int, selectedOptions: Boolean) {
+        var temp: Int = daysselected
         when (option) {
-             0 ->
+            0 ->
                 if (selectedOptions == true) {
-                    days_Selected = days_Selected or 1
+                    temp = daysselected or 1
+                    days_Selected.setValue(temp)
                 } else {
-                    days_Selected = (days_Selected and (1).inv())
+                    temp = daysselected and (1).inv()
+                    days_Selected.setValue(temp)
                 }
 
             1 ->
                 if (selectedOptions == true) {
-                    days_Selected = days_Selected or 2
+                    temp = daysselected or 2
+                    days_Selected.setValue(temp)
                 } else {
-                    days_Selected = (days_Selected and (2).inv())
+                    temp = daysselected and (2).inv()
+                    days_Selected.setValue(temp)
                 }
 
             2 ->
                 if (selectedOptions == true) {
-                    days_Selected = days_Selected or 4
+                    temp = daysselected or 4
+                    days_Selected.setValue(temp)
                 } else {
-                    days_Selected = (days_Selected and (4).inv())
+                    temp = daysselected and (4).inv()
+                    days_Selected.setValue(temp)
                 }
 
             3 ->
                 if (selectedOptions == true) {
-                    days_Selected = days_Selected or 8
+                    temp = daysselected or 8
+                    days_Selected.setValue(temp)
                 } else {
-                    days_Selected = (days_Selected and (8).inv())
+                    temp = daysselected and (8).inv()
+                    days_Selected.setValue(temp)
                 }
 
             4 ->
                 if (selectedOptions == true) {
-                    days_Selected = days_Selected or 16
+                    temp = daysselected or 16
+                    days_Selected.setValue(temp)
                 } else {
-                    days_Selected = (days_Selected and (16).inv())
+                    temp = daysselected and (16).inv()
+                    days_Selected.setValue(temp)
                 }
 
             5 ->
                 if (selectedOptions == true) {
-                    days_Selected = days_Selected or 32
+                    temp = daysselected or 32
+                    days_Selected.setValue(temp)
                 } else {
-                    days_Selected = (days_Selected and (32).inv())
+                    temp = daysselected and (32).inv()
+                    days_Selected.setValue(temp)
                 }
 
             6 ->
                 if (selectedOptions == true) {
-                    days_Selected = days_Selected or 64
+                    temp = daysselected or 64
+                    days_Selected.setValue(temp)
                 } else {
-                    days_Selected = (days_Selected and (64).inv())
+                    temp = daysselected and (64).inv()
+                    days_Selected.setValue(temp)
                 }
 
         }
