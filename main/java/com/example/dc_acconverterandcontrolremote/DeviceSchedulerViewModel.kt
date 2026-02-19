@@ -2,10 +2,14 @@ package com.example.dc_acconverterandcontrolremote
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.viewModelScope
 import java.util.Calendar
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 
 class DeviceSchedulerViewModel: ViewModel() {
 
@@ -44,10 +48,16 @@ class DeviceSchedulerViewModel: ViewModel() {
         MutableLiveData<Int>()
     }
 
-    fun deviceName(device_number: Int): String{
-        val device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
 
-        return   device.get(0).device_name
+    fun deviceName(device_number: Int): String {
+        var temp: String=""
+        viewModelScope.launch {
+            val device: List<Devices> = devicesDao.getItem(device_number).toList()
+
+            temp = device.get(0).device_name
+
+        }
+        return temp
     }
 
     fun seton_or_off(on_or_off: String){
@@ -64,8 +74,11 @@ class DeviceSchedulerViewModel: ViewModel() {
         on_or_off: String,
         string_onoff: String
     ): String {
+        var device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
 
-        val device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
+        viewModelScope.launch {
+            device.toList()
+        }
 
         if ((hourToSeT >= 0) and ((minuteToSet >= 0))) {
 
@@ -80,18 +93,13 @@ class DeviceSchedulerViewModel: ViewModel() {
         return "$hourSet : $minuteSet"
     }
 
-    fun setDeviceNumber(device_number:Int){
-        this.device_number.setValue(device_number)
-    }
-
-    fun setOnorOff(on_or_off: String){
-        this.on_or_off.setValue(on_or_off)
-    }
-
-
     fun TimesToshow(device_number: Int, on_or_off: String, string_onoff: String): String {
 
-        val device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
+        var device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
+
+        viewModelScope.launch {
+            device.toList()
+        }
         var timeToShow: String = ""
 
         if (on_or_off == string_onoff) {
@@ -106,93 +114,79 @@ class DeviceSchedulerViewModel: ViewModel() {
         return timeToShow
     }
 
-    fun setselectedTime(
-        hourToSeT: Int,
-        minuteToSet: Int,
-        device_number: Int,
-        on_or_off: String,
-        string_onoff: String
-    ): String {
-        val device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
 
-        if ((hourToSeT >= 0) and ((minuteToSet >= 0))) {
+    fun selectedDays(device_number: Int, option: Int, selectedOptions:Boolean) {
 
-            if (on_or_off == string_onoff) {
-                device.get(0).hour_on = hourToSeT
-                device.get(0).minutes_on = minuteToSet
-            } else {
-                device.get(0).hour_off = hourToSeT
-                device.get(0).minutes_off = minuteToSet
-            }
+        var device: List<Devices> = devicesDao.getItem(device_number) as List<Devices>
+
+        viewModelScope.launch {
+            device.toList()
         }
-        return "$hourSet : $minuteSet"
-    }
 
+        var days_week: Int = device.get(0).days_week!!
 
-    fun selectedDays(daysselected: Int, option: Int, selectedOptions: Boolean) {
-        var temp: Int = daysselected
         when (option) {
             0 ->
                 if (selectedOptions == true) {
-                    temp = daysselected or 1
-                    days_Selected.setValue(temp)
+                    days_week = days_week or 1
+                    device.get(0).days_week=days_week
                 } else {
-                    temp = daysselected and (1).inv()
-                    days_Selected.setValue(temp)
+                    days_week = days_week and (1).inv()
+                    device.get(0).days_week=days_week
                 }
 
             1 ->
                 if (selectedOptions == true) {
-                    temp = daysselected or 2
-                    days_Selected.setValue(temp)
+                    days_week = days_week or 2
+                    device.get(0).days_week=days_week
                 } else {
-                    temp = daysselected and (2).inv()
-                    days_Selected.setValue(temp)
+                    days_week = days_week and (2).inv()
+                    device.get(0).days_week=days_week
                 }
 
             2 ->
                 if (selectedOptions == true) {
-                    temp = daysselected or 4
-                    days_Selected.setValue(temp)
+                    days_week = days_week or 4
+                    device.get(0).days_week=days_week
                 } else {
-                    temp = daysselected and (4).inv()
-                    days_Selected.setValue(temp)
+                    days_week = days_week and (4).inv()
+                    device.get(0).days_week=days_week
                 }
 
             3 ->
                 if (selectedOptions == true) {
-                    temp = daysselected or 8
-                    days_Selected.setValue(temp)
+                    days_week = days_week or 8
+                    device.get(0).days_week=days_week
                 } else {
-                    temp = daysselected and (8).inv()
-                    days_Selected.setValue(temp)
+                    days_week = days_week and (8).inv()
+                    device.get(0).days_week=days_week
                 }
 
             4 ->
                 if (selectedOptions == true) {
-                    temp = daysselected or 16
-                    days_Selected.setValue(temp)
+                    days_week = days_week or 16
+                    device.get(0).days_week=days_week
                 } else {
-                    temp = daysselected and (16).inv()
-                    days_Selected.setValue(temp)
+                    days_week = days_week and (16).inv()
+                    device.get(0).days_week=days_week
                 }
 
             5 ->
                 if (selectedOptions == true) {
-                    temp = daysselected or 32
-                    days_Selected.setValue(temp)
+                    days_week = days_week or 32
+                    device.get(0).days_week=days_week
                 } else {
-                    temp = daysselected and (32).inv()
-                    days_Selected.setValue(temp)
+                    days_week = days_week and (32).inv()
+                    device.get(0).days_week=days_week
                 }
 
             6 ->
                 if (selectedOptions == true) {
-                    temp = daysselected or 64
-                    days_Selected.setValue(temp)
+                    days_week = days_week or 64
+                    device.get(0).days_week=days_week
                 } else {
-                    temp = daysselected and (64).inv()
-                    days_Selected.setValue(temp)
+                    days_week = days_week and (64).inv()
+                    device.get(0).days_week=days_week
                 }
 
         }

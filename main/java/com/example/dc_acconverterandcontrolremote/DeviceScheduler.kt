@@ -29,7 +29,7 @@ import androidx.lifecycle.Observer
 import kotlin.Int
 
 @Composable
-fun dataFromViewModel(model: DeviceSchedulerViewModel) {
+fun DataFromViewModel(model: DeviceSchedulerViewModel) {
 
     val context: Context = LocalContext.current
 
@@ -55,7 +55,7 @@ fun dataFromViewModel(model: DeviceSchedulerViewModel) {
 fun EditTextONOFF(context: Context,device_number: MutableLiveData<Int>, setdevice_number:(device_number: Int)->Unit,
                   on_or_off:MutableLiveData<String>,seton_or_off:(on_or_off:String)->Unit, modifier: Modifier,
                   hourSet: MutableLiveData<Int>, minuteSet: MutableLiveData<Int>,hourForPicker: Int, minuteForPicker: Int,
-                  TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String?)-> String,
+                  TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String)-> String,
                   setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_off: String,string_onoff: String)-> String) {
 
         val device_number_keeper : Int = device_number.value!!
@@ -65,9 +65,8 @@ fun EditTextONOFF(context: Context,device_number: MutableLiveData<Int>, setdevic
         var selectedTime: TimePickerState? by remember { mutableStateOf(null) }
         var showTimePicker by remember { mutableStateOf(true) }
         val calendar = Calendar.getInstance()
-        val hourForPicker: Int = hourSet ?: calendar[Calendar.HOUR_OF_DAY]
-        val minuteForPicker: Int = minuteSet ?: calendar[Calendar.MINUTE]
-        val device: List<Devices> = devicesDao?.getItem(device_number) as List<Devices>
+        val hourForPicker: Int = hourSet.value ?: calendar[Calendar.HOUR_OF_DAY]
+        val minuteForPicker: Int = minuteSet.value ?: calendar[Calendar.MINUTE]
 
 
         val timePickerState = rememberTimePickerState(
@@ -86,22 +85,17 @@ fun EditTextONOFF(context: Context,device_number: MutableLiveData<Int>, setdevic
             ) {
                 showTimePicker = true
 
-                // Source - https://stackoverflow.com/a/79889530
-// Posted by tyg, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-02-16, License - CC BY-SA 4.0
-
                 TextField(
-                    // colors = MaterialTheme.colorScheme.onPrimary,
                     readOnly = false,
                     enabled = false,
                     value = timeToShow,
                     onValueChange = { /* ... */ },
-                    label = { Text(on_or_off) },
+                    label =  {Text(on_or_off.value!!)} ,
                     singleLine = true,
                     placeholder = { Text(stringResource(R.string.click)) },
                     modifier = Modifier.clickable {
                         showTimePicker = true
-                    },
+                    }
                 )
 
 
@@ -147,6 +141,7 @@ fun EditTextONOFF(context: Context,device_number: MutableLiveData<Int>, setdevic
                                    setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_off: String,string_onoff: String)-> String,
                                    selectedDays:(daysselected: Int, option: Int, selectedOptions: Boolean)->Unit    ) {
 
+        val device_number_keeper : Int = device_number.value!!
 
         ConstraintLayout(
             Modifier
@@ -234,7 +229,7 @@ fun EditTextONOFF(context: Context,device_number: MutableLiveData<Int>, setdevic
             )
             seton_or_off(stringResource(R.string.OFF))
             EditTextONOFF(
-                context, device_number, setdevice_number, off,
+                context, device_number, setdevice_number, on_or_off,
                 seton_or_off, modifierEditOff, hourSet, minuteSet, hourForPicker,
                 minuteForPicker, TimesToshow, setselectedTime
             )
@@ -266,9 +261,9 @@ fun EditTextONOFF(context: Context,device_number: MutableLiveData<Int>, setdevic
                         checked = selectedOptions[index],
                         onCheckedChange = {
                             selectedOptions[index] = !selectedOptions[index]
-                            setdevice_number(device_number)
-                            seton_or_off(on_or_off)
-                            selectedDays(index, {selectedOptions[index]})
+                            setdevice_number(device_number.value!!)
+                            seton_or_off(on_or_off.value!!)
+                            selectedDays(device_number_keeper,index, selectedOptions[index])
                         },
                         label =
                             { }
@@ -306,10 +301,7 @@ fun EditTextONOFF(context: Context,device_number: MutableLiveData<Int>, setdevic
                 ConstrainWithEditTextOnOff(
                     context, device_number, setdevice_number, on_or_off,
                     seton_or_off, hourSet, minuteSet, hourForPicker, minuteForPicker,
-                    TimesToshow, setselectedTime)
+                    TimesToshow, setselectedTime,selectedDays )
             }
         }
     }
-
-
-

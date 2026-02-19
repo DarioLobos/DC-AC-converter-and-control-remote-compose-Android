@@ -26,6 +26,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.DevicesDataBase
+import androidx.lifecycle.Lifecycle;
 
 var devices: List <Devices>?= null
 
@@ -87,7 +88,11 @@ suspend fun deviceListInit() {
     }
 
     fun deviceName(devicenbr:Int ):String? {
-        val device: List<Devices> = devicesDao?.getItem(devicenbr) as List<Devices>
+        var device: List<Devices> = devicesDao.getItem(devicenbr) as List<Devices>
+
+        GlobalScope.launch {
+            device.toList()
+        }
         val name: String = device.get(0).device_name
         return name
     }
@@ -101,7 +106,13 @@ suspend fun deviceListInit() {
         if (devices > qtydevices) {
 
             for (i in (devices - 1) downTo (qtydevices - 1)) {
-                devicesDao.delete((devicesDao.getItem(i) as List<Devices>).get(0))
+
+                var device: List<Devices> = devicesDao.getItem(i) as List<Devices>
+
+                GlobalScope.launch {
+                    devicesDao.delete(device.toList().get(0))
+                }
+
             }
 
             devicesSet(qtydevices, context)
