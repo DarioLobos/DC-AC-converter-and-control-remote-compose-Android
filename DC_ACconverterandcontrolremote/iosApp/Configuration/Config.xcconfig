@@ -1,7 +1,0 @@
-TEAM_ID=
-
-PRODUCT_NAME=DC_ACconverterandcontrolremote
-PRODUCT_BUNDLE_IDENTIFIER=com.example.dc_acconverterandcontrolremote.DC_ACconverterandcontrolremote$(TEAM_ID)
-
-CURRENT_PROJECT_VERSION=1
-MARKETING_VERSION=1.0
