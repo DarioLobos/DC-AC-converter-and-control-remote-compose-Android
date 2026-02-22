@@ -40,8 +40,8 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel){
     val scope = rememberCoroutineScope()
 
     NavigationSuiteScaffold(
-        containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
+     //   containerColor = MaterialTheme.colorScheme.primary,
+     //   contentColor = MaterialTheme.colorScheme.onPrimary,
         navigationSuiteItems = {
             MenuList.entries.forEach {
                 item(
@@ -60,7 +60,7 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel){
     ){
         val context = LocalContext.current
         when (currentDestination) {
-            MenuList.HOME -> MainScreen (context)
+            MenuList.HOME -> MainScreen (context, viewModel)
             MenuList.VOLTAGES -> Voltage_Screen()
             MenuList.CHARGERSCHEDULER -> ChargerScheduler_Screen()
             MenuList.DEVICESSCHEDULER ->  DataFromViewModel(viewModel)
