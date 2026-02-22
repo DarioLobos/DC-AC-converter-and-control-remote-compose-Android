@@ -2,12 +2,29 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") version "2.3.4" apply false
+    id ("androidx.room")
+}
+
+kotlin{
+    sourceSets{
+        val commonMain by getting {
+            dependencies {
+                /// Compose 1.9.0+
+                implementation("tech.annexflow.compose:constraintlayout-compose-multiplatform:0.6.1")
+                /// Compose 1.9.0+ with different tech.annexflow.constraintlayout.core package
+                implementation("tech.annexflow.compose:constraintlayout-compose-multiplatform:0.6.1-shaded-core")
+                /// Compose 1.9.0+ with different tech.annexflow.constraintlayout package
+                implementation("tech.annexflow.compose:constraintlayout-compose-multiplatform:0.6.1-shaded")
+            }
+        }
+
+    }
 
 }
 
-
 android {
-    namespace = "com.example.dc_acconverterandcontrolremote"
+    room {
+        schemaDirectory("$projectDir/schemas")    namespace = "com.example.dc_acconverterandcontrolremote"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -85,5 +102,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite")
-//    ksp("androidx.room:room-compiler:2.5.0")
+//   ksp("androidx.room:room-compiler:2.5.0")
+
 }

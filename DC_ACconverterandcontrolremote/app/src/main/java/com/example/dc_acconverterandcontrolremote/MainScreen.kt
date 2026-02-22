@@ -24,7 +24,7 @@ import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.Devi
 
 @Composable
 fun ButtonstoONOFF(device_number : Int, on_or_off : String, modifier: Modifier, model: DeviceSchedulerViewModel) {
-
+println("Button op start device: $device_number $on_or_off" )
     ElevatedButton(
         onClick = {
         model.sendActionToWiFI(device_number, on_or_off)
@@ -37,12 +37,14 @@ fun ButtonstoONOFF(device_number : Int, on_or_off : String, modifier: Modifier, 
         content = { Text(on_or_off, color = Color.Black, fontSize = 20.sp) },
         modifier = modifier.wrapContentSize()
     )
-
+    println("Button op exit device: $device_number $on_or_off" )
     }
 
 
 @Composable
 fun ConstraionWithButtonsOnOff(device_number:Int, device_name:String, model: DeviceSchedulerViewModel) {
+    println("Constrain start  device: $device_number"  )
+
 
     ConstraintLayout(Modifier
         .wrapContentSize()
@@ -85,6 +87,7 @@ fun ConstraionWithButtonsOnOff(device_number:Int, device_name:String, model: Dev
             chainStyle = ChainStyle.SpreadInside
         )
     }
+    println("Constrain exit device: $device_number"  )
 
 }
 @Composable
@@ -97,13 +100,18 @@ fun LazyGridForButtonsMain(model: DeviceSchedulerViewModel){
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             items(devicesListSize){
+                println("Lazi grid start device: $it"  )
             ConstraionWithButtonsOnOff(it, model.deviceName(it)?:"" ,model)
+                println("Lazi grid start device: $it"  )
+
             }
+
         }
     }
 
 @Composable
 fun MainScreen (context: Context, model: DeviceSchedulerViewModel){
+    println("MainScreen start "  )
 
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(key1=Unit) {
@@ -111,7 +119,7 @@ fun MainScreen (context: Context, model: DeviceSchedulerViewModel){
 
             launch {
 
-
+                println("Launch Effect Blocking")
                 if (model.devicesDao.getAll().count() == 0) {
                     model.devicesInit(context)
                     model.deviceListInit()
@@ -121,4 +129,5 @@ fun MainScreen (context: Context, model: DeviceSchedulerViewModel){
     }
 
     LazyGridForButtonsMain(model)
+    println("MainScreen end "  )
 }
