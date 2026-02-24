@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.ui.platform.LocalContext
 //import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.DevicesDataBase
@@ -22,11 +23,11 @@ class MainActivity : ComponentActivity() {
 
             DC_ACConverterAndControlRemoteTheme {
                 DatabaseApplication()
-
+                val context= LocalContext.current
 
                 val modelComposeM3= viewModel<DeviceSchedulerViewModel>()
-                modelComposeM3.devicesDao= DevicesDataBase(this).daoDevices()
-                MainApp(this,modelComposeM3 )
+                modelComposeM3.devicesDao= DevicesDataBase(applicationContext).daoDevices()
+                MainApp(context,modelComposeM3 )
 
 
             }
