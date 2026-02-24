@@ -7,7 +7,7 @@ plugins {
 
 kotlin{
     sourceSets{
-        val commonMain by getting {
+     //   val main by getting {
             dependencies {
                 /// Compose 1.9.0+
                 implementation("tech.annexflow.compose:constraintlayout-compose-multiplatform:0.6.1")
@@ -15,7 +15,7 @@ kotlin{
                 implementation("tech.annexflow.compose:constraintlayout-compose-multiplatform:0.6.1-shaded-core")
                 /// Compose 1.9.0+ with different tech.annexflow.constraintlayout package
                 implementation("tech.annexflow.compose:constraintlayout-compose-multiplatform:0.6.1-shaded")
-            }
+     //       }
         }
 
     }
@@ -23,8 +23,8 @@ kotlin{
 }
 
 android {
-    room {
-        schemaDirectory("$projectDir/schemas")    namespace = "com.example.dc_acconverterandcontrolremote"
+
+        namespace = "com.example.dc_acconverterandcontrolremote"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
