@@ -19,6 +19,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ChainStyle
+import com.example.dc_acconverterandcontrolremote.R
+
 import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.DevicesDataBase
 
 

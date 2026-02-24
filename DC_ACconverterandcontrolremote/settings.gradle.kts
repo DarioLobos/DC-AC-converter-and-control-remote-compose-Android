@@ -25,4 +25,3 @@ dependencyResolutionManagement {
 rootProject.name = "DC_ACconverterandcontrolremote"
 include(":app")
 include(":shared")
-include(":shared")

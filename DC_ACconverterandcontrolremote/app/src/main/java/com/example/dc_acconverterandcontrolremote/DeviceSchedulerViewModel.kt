@@ -208,6 +208,7 @@ class DeviceSchedulerViewModel: ViewModel() {
         viewModelScope.launch {
             device!!.toList()
         }
+
         var timeToShow: String? = null
 
         if (on_or_off == string_onoff) {
