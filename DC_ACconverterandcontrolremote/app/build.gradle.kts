@@ -2,8 +2,13 @@ plugins {
 
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp") version "2.3.4" apply false
+//    alias(libs.plugins.ksp)
+//    alias(libs.plugins.androidx.room)
+//    alias(libs.plugins.android.library)
+//    id("com.google.devtools.ksp") version "2.3.5" apply false
+
     id("androidx.room") version "2.8.4" apply false // Use the latest version
+
 }
 
 kotlin{
@@ -22,9 +27,10 @@ android {
         }
     }
 
-    //room {
-    //    schemaDirectory("$projectDir/schemas")
-    //}
+//    room {
+//        schemaDirectory("$projectDir/schemas")
+//    }
+
     defaultConfig {
         applicationId = "com.example.dc_acconverterandcontrolremote"
         minSdk = 29
@@ -96,6 +102,12 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite")
-//    ksp("androidx.room:room-compiler:2.5.0")
+//     ksp("androidx.room:room-compiler:2.5.0")
+
+    //Room
+    implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")
+//    ksp("androidx.room:room-compiler:${rootProject.extra["room_version"]}")
+    implementation("androidx.room:room-ktx:${rootProject.extra["room_version"]}")
+
 
 }

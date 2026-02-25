@@ -79,7 +79,7 @@ val setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_of
         Box(propagateMinConstraints = false) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .wrapContentSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 showTimePicker = true
@@ -209,7 +209,6 @@ class ConstrainWithEditTextOnOff(val context: Context, val device_number: Int,
 
             Text(
                 text = deviceName(device_number_keeper),
-                color = MaterialTheme.colorScheme.onPrimary,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = modifierText

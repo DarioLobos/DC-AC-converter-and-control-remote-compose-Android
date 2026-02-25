@@ -2,6 +2,7 @@ package com.example.dc_acconverterandcontrolremote
 
 import android.content.Context
 import android.content.res.Resources
+import android.net.IpPrefix
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlin.text.toInt
 
 class DeviceSchedulerViewModel: ViewModel() {
     init {
@@ -60,9 +62,16 @@ class DeviceSchedulerViewModel: ViewModel() {
 
     suspend fun devicesSet(nbr_devices: Int, context: Context) {
         context.myDataStore.edit {
+            it[NUMBER_DEVICES] = nbr_devices
 
         }
         Toast.makeText(context, R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT).show()
+    }
+    fun numberSetLaunch(macAddressText: String, context: Context) {
+        val temp: Int = macAddressText.toInt()
+        viewModelScope.launch {
+            devicesSet(temp, context)
+        }
     }
 
 
@@ -71,6 +80,12 @@ class DeviceSchedulerViewModel: ViewModel() {
             it[MAC_ADDRESS] = macaddress
         }
         Toast.makeText(context, R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
+    }
+    fun MacSetLaunch(macAddressText: String, context: Context) {
+        val temp: Int = macAddressText.toInt()
+        viewModelScope.launch {
+            macAddressSet(temp, context)
+        }
     }
 
 
@@ -81,6 +96,15 @@ class DeviceSchedulerViewModel: ViewModel() {
         Toast.makeText(context, R.string.toast_set_IP, Toast.LENGTH_SHORT).show()
 
     }
+
+    fun IpSetLaunch(ipAddressText: String, context: Context) {
+        val temp: Int = ipAddressText.toInt()
+        viewModelScope.launch {
+            IPAddressSet(temp, context)
+        }
+    }
+
+
 
     suspend fun devicesInit(context: Context) {
 

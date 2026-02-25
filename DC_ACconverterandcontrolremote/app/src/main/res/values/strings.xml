@@ -52,4 +52,10 @@
     <string name="cancel">Dismiss</string>
     <string name="setTimeCancel">Setup time cancelled</string>
     <string name="setTimeRecorded">Setup time Recorded</string>
+    <string name="ipAddress">Ip Address =</string>
+    <string name="macAddress">Mac Address =</string>
+    <string name="numberdevices">Quantity of devices =</string>
+    <string name="required">Requided!</string>
+    <string name="more12">Must be less than 12 digits</string>
+
 </resources>
