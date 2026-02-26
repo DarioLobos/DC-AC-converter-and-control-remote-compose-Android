@@ -1,22 +1,12 @@
 plugins {
-
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-//    alias(libs.plugins.ksp)
-//    alias(libs.plugins.androidx.room)
-//    alias(libs.plugins.android.library)
-//    id("com.google.devtools.ksp") version "2.3.5" apply false
-
-    id("androidx.room") version "2.8.4" apply false // Use the latest version
-
+    alias(libs.plugins.ksp)            // This must be UNCOMMENTED
+    alias(libs.plugins.androidx.room)   // This must be UNCOMMENTED
 }
 
 kotlin{
         }
-
-
-
-
 
 android {
 
@@ -25,11 +15,12 @@ android {
         version = release(36) {
             minorApiLevel = 1
         }
+
     }
 
-//    room {
-//        schemaDirectory("$projectDir/schemas")
-//    }
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
 
     defaultConfig {
         applicationId = "com.example.dc_acconverterandcontrolremote"
@@ -60,6 +51,7 @@ android {
 }
 
 dependencies {
+    // 1. Core & Compose (Using Catalog)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -68,46 +60,33 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
+    // 2. Room (Using Catalog)
+    implementation(libs.androidx.room.runtime)
+    // If Room 2.8.4 shows 'ktx' as red, simply DELETE this line.
+    // Coroutines are now built into the main runtime.
+    implementation(libs.androidx.room.ktx)
+    // This fixes "Unresolved ksp"
+    ksp(libs.androidx.room.compiler)
+
+    // 3. Navigation & Lifecycle (Updating to match your Version Catalog)
     implementation(libs.androidx.navigation3.runtime)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.1.1")
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-    val room_version = "2.8.4"
-    implementation("androidx.room:room-runtime:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
+    // Use the versions Panda suggested for better compatibility:
+    implementation("androidx.navigation:navigation-compose:2.9.7")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+
+    // 4. Coroutines & DataStore (Updated to latest)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("androidx.datastore:datastore-preferences:1.2.0")
-    val nav_version = "2.9.7"
-    implementation("androidx.navigation:navigation-compose:$nav_version")
-    val lifecycle_version = "2.10.0"
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite")
-//     ksp("androidx.room:room-compiler:2.5.0")
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.1.1")
 
-    //Room
-    implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")
-//    ksp("androidx.room:room-compiler:${rootProject.extra["room_version"]}")
-    implementation("androidx.room:room-ktx:${rootProject.extra["room_version"]}")
-
-
+    // 5. Testing
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

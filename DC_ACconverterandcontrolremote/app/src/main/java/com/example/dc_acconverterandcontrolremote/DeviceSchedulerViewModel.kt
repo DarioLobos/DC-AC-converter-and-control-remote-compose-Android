@@ -6,6 +6,7 @@ import android.net.IpPrefix
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.datastore.preferences.core.edit
@@ -58,7 +59,6 @@ class DeviceSchedulerViewModel: ViewModel() {
 
 
     lateinit var devicesDao: DaoDevices
-
 
     suspend fun devicesSet(nbr_devices: Int, context: Context) {
         context.myDataStore.edit {
@@ -368,5 +368,13 @@ class DeviceSchedulerViewModel: ViewModel() {
                 }
 
         }
+    }
+
+    fun Char.isHexDigit(): Boolean {
+        return this in '0'..'9' || this in 'a'..'f' || this in 'A'..'F'
+    }
+
+    fun setMacAddress(mac: ByteArray?){
+        //PENDING
     }
 }

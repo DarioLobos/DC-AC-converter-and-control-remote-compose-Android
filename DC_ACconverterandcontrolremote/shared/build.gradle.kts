@@ -2,17 +2,18 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.android.lint)
-//    alias(libs.plugins.androidx.room)
-
-//   alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.androidx.room)
+    alias(libs.plugins.ksp)
+    // DELETE 'kotlinSerialization' (it doesn't exist in your TOML)
+    // KEEP ONLY THIS ONE:
+    alias(libs.plugins.kotlin.serialization)
 //   alias(libs.plugins.spotless)
 //    alias(libs.plugins.hilt)
-//    alias(libs.plugins.ksp) apply false
-
-    id("androidx.room") version "2.8.4" apply false // Use the latest version
-
-
 }
+
+
+
+
 
 
 kotlin {

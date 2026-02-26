@@ -57,5 +57,7 @@
     <string name="numberdevices">Quantity of devices =</string>
     <string name="required">Requided!</string>
     <string name="more12">Must be less than 12 digits</string>
+    <string name="more3">Devices are limited to 100</string>
+    <string name="invalid">Invalid Input</string>
 
 </resources>
