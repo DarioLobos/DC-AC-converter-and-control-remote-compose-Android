@@ -19,6 +19,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ChainStyle
+import com.example.dc_acconverterandcontrolremote.R
+
 import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.DevicesDataBase
 
 
@@ -90,10 +92,10 @@ class ConstrainWithButtonsOnOff (val device_number:Int, val deviceName:(devicenb
                 fontWeight = FontWeight.Bold,
                 modifier = modifierText
             )
-            val buttonOnData:ButtonstoONOFF= ButtonstoONOFF(device_number, on, modifierOn, model)
+            val buttonOnData:ButtonstoONOFF = ButtonstoONOFF(device_number, on, modifierOn, model)
                 buttonOnData.buttonstoONOFF()
 
-            val buttonOffData:ButtonstoONOFF= ButtonstoONOFF(device_number, off, modifierOff, model)
+            val buttonOffData:ButtonstoONOFF = ButtonstoONOFF(device_number, off, modifierOff, model)
                 buttonOffData.buttonstoONOFF()
 
             createHorizontalChain(

@@ -92,10 +92,10 @@ class ConstrainWithButtonsOnOff (val device_number:Int, val deviceName:(devicenb
                 fontWeight = FontWeight.Bold,
                 modifier = modifierText
             )
-            val buttonOnData:ButtonstoONOFF= ButtonstoONOFF(device_number, on, modifierOn, model)
+            val buttonOnData:ButtonstoONOFF = ButtonstoONOFF(device_number, on, modifierOn, model)
                 buttonOnData.buttonstoONOFF()
 
-            val buttonOffData:ButtonstoONOFF= ButtonstoONOFF(device_number, off, modifierOff, model)
+            val buttonOffData:ButtonstoONOFF = ButtonstoONOFF(device_number, off, modifierOff, model)
                 buttonOffData.buttonstoONOFF()
 
             createHorizontalChain(

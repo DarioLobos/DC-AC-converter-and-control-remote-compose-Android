@@ -64,7 +64,7 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel){
             MenuList.VOLTAGES -> Voltage_Screen()
             MenuList.CHARGERSCHEDULER -> ChargerScheduler_Screen()
             MenuList.DEVICESSCHEDULER ->  DataFromViewModel(viewModel)
-            MenuList.SETTINGS -> Settings_Screen()
+            MenuList.SETTINGS -> Settings_Screen(viewModel, context)
 
         }
     }

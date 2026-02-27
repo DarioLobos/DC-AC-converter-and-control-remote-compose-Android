@@ -3,6 +3,7 @@ package com.example.dc_acconverterandcontrolremote
 import android.content.Context
 import android.content.res.Resources
 import android.net.IpPrefix
+import android.net.MacAddress
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -374,7 +375,25 @@ class DeviceSchedulerViewModel: ViewModel() {
         return this in '0'..'9' || this in 'a'..'f' || this in 'A'..'F'
     }
 
-    fun setMacAddress(mac: ByteArray?){
+    fun setMacAddress(message: ByteArray){
+           val MacAddress =  message.toString()
         //PENDING
+    }
+    fun setIpAddress(message: ByteArray){
+
+    var IpAddress: Int=0
+
+       for (i in  0..message.size){
+            IpAddress += message[i].toString().toInt() * 10^i
+                //PENDING
+            }
+        }
+
+    fun setPortToUse(message: ByteArray): Int{
+        val portToUse : Int = ((message[1].toInt().and(0xFF)).shl(8)) or (message[0].toInt().and(0xFF))
+
+        //PENDING
+
+        return portToUse
     }
 }

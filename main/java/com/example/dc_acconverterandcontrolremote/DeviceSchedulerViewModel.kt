@@ -2,9 +2,12 @@ package com.example.dc_acconverterandcontrolremote
 
 import android.content.Context
 import android.content.res.Resources
+import android.net.IpPrefix
+import android.net.MacAddress
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.datastore.preferences.core.edit
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlin.text.toInt
 
 class DeviceSchedulerViewModel: ViewModel() {
     init {
@@ -57,12 +61,18 @@ class DeviceSchedulerViewModel: ViewModel() {
 
     lateinit var devicesDao: DaoDevices
 
-
     suspend fun devicesSet(nbr_devices: Int, context: Context) {
         context.myDataStore.edit {
+            it[NUMBER_DEVICES] = nbr_devices
 
         }
         Toast.makeText(context, R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT).show()
+    }
+    fun numberSetLaunch(macAddressText: String, context: Context) {
+        val temp: Int = macAddressText.toInt()
+        viewModelScope.launch {
+            devicesSet(temp, context)
+        }
     }
 
 
@@ -71,6 +81,12 @@ class DeviceSchedulerViewModel: ViewModel() {
             it[MAC_ADDRESS] = macaddress
         }
         Toast.makeText(context, R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
+    }
+    fun MacSetLaunch(macAddressText: String, context: Context) {
+        val temp: Int = macAddressText.toInt()
+        viewModelScope.launch {
+            macAddressSet(temp, context)
+        }
     }
 
 
@@ -81,6 +97,15 @@ class DeviceSchedulerViewModel: ViewModel() {
         Toast.makeText(context, R.string.toast_set_IP, Toast.LENGTH_SHORT).show()
 
     }
+
+    fun IpSetLaunch(ipAddressText: String, context: Context) {
+        val temp: Int = ipAddressText.toInt()
+        viewModelScope.launch {
+            IPAddressSet(temp, context)
+        }
+    }
+
+
 
     suspend fun devicesInit(context: Context) {
 
@@ -208,6 +233,7 @@ class DeviceSchedulerViewModel: ViewModel() {
         viewModelScope.launch {
             device!!.toList()
         }
+
         var timeToShow: String? = null
 
         if (on_or_off == string_onoff) {
@@ -343,5 +369,31 @@ class DeviceSchedulerViewModel: ViewModel() {
                 }
 
         }
+    }
+
+    fun Char.isHexDigit(): Boolean {
+        return this in '0'..'9' || this in 'a'..'f' || this in 'A'..'F'
+    }
+
+    fun setMacAddress(message: ByteArray){
+           val MacAddress =  message.toString()
+        //PENDING
+    }
+    fun setIpAddress(message: ByteArray){
+
+    var IpAddress: Int=0
+
+       for (i in  0..message.size){
+            IpAddress += message[i].toString().toInt() * 10^i
+                //PENDING
+            }
+        }
+
+    fun setPortToUse(message: ByteArray): Int{
+        val portToUse : Int = ((message[1].toInt().and(0xFF)).shl(8)) or (message[0].toInt().and(0xFF))
+
+        //PENDING
+
+        return portToUse
     }
 }
