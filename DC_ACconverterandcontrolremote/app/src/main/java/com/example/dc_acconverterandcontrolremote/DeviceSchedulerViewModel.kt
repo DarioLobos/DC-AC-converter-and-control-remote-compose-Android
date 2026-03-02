@@ -2,8 +2,6 @@ package com.example.dc_acconverterandcontrolremote
 
 import android.content.Context
 import android.content.res.Resources
-import android.net.IpPrefix
-import android.net.MacAddress
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.MutableLiveData;
@@ -20,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlin.text.forEach
 import kotlin.text.toInt
 
 class DeviceSchedulerViewModel: ViewModel() {
@@ -52,8 +52,8 @@ class DeviceSchedulerViewModel: ViewModel() {
 
     private val Context.myDataStore by preferencesDataStore(name = "settings")
 
-    val MAC_ADDRESS = intPreferencesKey("mac_address")
-    val IP_ADDRESS = intPreferencesKey("ip_address")
+    val MAC_ADDRESS = stringPreferencesKey("mac_address")
+    val IP_ADDRESS = stringPreferencesKey("ip_address")
     val NUMBER_DEVICES = intPreferencesKey("number_deices")
 
     val default_nbr_devices: Int = 8
@@ -68,29 +68,28 @@ class DeviceSchedulerViewModel: ViewModel() {
         }
         Toast.makeText(context, R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT).show()
     }
-    fun numberSetLaunch(macAddressText: String, context: Context) {
-        val temp: Int = macAddressText.toInt()
+    fun numberSetLaunch(numberDevicesText: String, context: Context) {
+        val temp: Int = numberDevicesText.toInt()
         viewModelScope.launch {
             devicesSet(temp, context)
         }
     }
 
 
-    suspend fun macAddressSet(macaddress: Int, context: Context) {
+    suspend fun macAddressSet(macAddress: String, context: Context) {
         context.myDataStore.edit {
-            it[MAC_ADDRESS] = macaddress
+            it[MAC_ADDRESS] = macAddress
         }
         Toast.makeText(context, R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
     }
     fun MacSetLaunch(macAddressText: String, context: Context) {
-        val temp: Int = macAddressText.toInt()
         viewModelScope.launch {
-            macAddressSet(temp, context)
+            macAddressSet(macAddressText, context)
         }
     }
 
 
-    suspend fun IPAddressSet(ipaddress: Int, context: Context) {
+    suspend fun IPAddressSet(ipaddress: String, context: Context) {
         context.myDataStore.edit {
             it[IP_ADDRESS] = ipaddress
         }
@@ -99,9 +98,8 @@ class DeviceSchedulerViewModel: ViewModel() {
     }
 
     fun IpSetLaunch(ipAddressText: String, context: Context) {
-        val temp: Int = ipAddressText.toInt()
         viewModelScope.launch {
-            IPAddressSet(temp, context)
+            IPAddressSet(ipAddressText, context)
         }
     }
 
@@ -375,19 +373,60 @@ class DeviceSchedulerViewModel: ViewModel() {
         return this in '0'..'9' || this in 'a'..'f' || this in 'A'..'F'
     }
 
-    fun setMacAddress(message: ByteArray){
-           val MacAddress =  message.toString()
-        //PENDING
-    }
-    fun setIpAddress(message: ByteArray){
 
-    var IpAddress: Int=0
+    fun setIpAddressToString(message: ByteArray):String{
+        //big endian
+        lateinit var temp: String
 
-       for (i in  0..message.size){
-            IpAddress += message[i].toString().toInt() * 10^i
-                //PENDING
+       for (i in  0..message.size ){
+           temp += message[i].toString()
             }
+        return temp
         }
+
+    fun setIpStringToAddress(ipAddress:String): ByteArray{
+        // big endian
+        lateinit var temp: ByteArray
+
+        ipAddress.forEach {char->
+            var i: Int=0
+            temp[i]=char.toString().toByte()
+            i++
+        }
+
+        return temp
+    }
+
+    fun setMacAddressToString(message: ByteArray):String{
+        //big endian
+        lateinit var temp: String
+
+        for (i in  0..message.size ){
+            temp += message[i].toHexString()
+        }
+        return temp
+    }
+
+    fun setMacStringToAddress(macAddress:String): ByteArray{
+        // little endian
+        lateinit var temp: ByteArray
+        lateinit var tempString: String
+        var i: Int=0
+        var  j: Int=5 // mac addres is 7 bytes
+            macAddress.forEach { char ->
+                tempString += char.toString()
+                if (i == 1) {
+                    tempString = "0x$tempString"
+                    temp[j] = tempString.toByte()
+                    tempString = ""
+                    i = 0
+                    j-- // should be from 5 to 0
+                }
+                i++
+            }
+            return temp
+    }
+
 
     fun setPortToUse(message: ByteArray): Int{
         val portToUse : Int = ((message[1].toInt().and(0xFF)).shl(8)) or (message[0].toInt().and(0xFF))

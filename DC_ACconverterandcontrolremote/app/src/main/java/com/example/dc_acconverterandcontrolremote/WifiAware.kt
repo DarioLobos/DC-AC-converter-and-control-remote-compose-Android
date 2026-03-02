@@ -148,14 +148,15 @@ lateinit var  peerHandle: PeerHandle
                         println("received message, port = $portToUse")
 
                     } else if (message.size == 6) {
-                        viewModel.setMacAddress(message);
+
+                          viewModel.MacSetLaunch(viewModel.setMacAddressToString(message), context)
 
                     } else if (message.size == 16) {;
-                        viewModel.setIpAddress(message);
+                        viewModel.IpSetLaunch(viewModel.setIpAddressToString(message), context);
 
-                    } else if (message.size > 16) {
-                        viewModel.receivedMessage(message);
-                        //Toast.makeText(MainActivity.this, "message received", Toast.LENGTH_SHORT).show();
+//                    } else if (message.size > 16) {
+//                        viewModel.receivedMessage(message);
+//                        //Toast.makeText(MainActivity.this, "message received", Toast.LENGTH_SHORT).show();
                     }
                 }
     }
