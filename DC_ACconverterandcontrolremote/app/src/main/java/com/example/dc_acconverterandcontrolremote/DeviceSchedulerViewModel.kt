@@ -52,8 +52,17 @@ class DeviceSchedulerViewModel: ViewModel() {
 
     private val Context.myDataStore by preferencesDataStore(name = "settings")
 
-    val MAC_ADDRESS = stringPreferencesKey("mac_address")
-    val IP_ADDRESS = stringPreferencesKey("ip_address")
+    // this Mac address is the address of the phone and not remote link address
+    val MAC_ADDRESS_LOCAL = stringPreferencesKey("mac_address_local")
+
+    val MAC_ADDRESS_REMOTE = stringPreferencesKey("mac_address_remote")
+
+    val IP_ADDRESS_LOCAL =stringPreferencesKey("ip_address_local")
+
+    // this IP address is from the renote link and not of the device
+    val IP_ADDRESS_REMOTE = stringPreferencesKey("ip_address")
+
+    val PEER_PORT = intPreferencesKey("ip_address")
     val NUMBER_DEVICES = intPreferencesKey("number_deices")
 
     val default_nbr_devices: Int = 8
@@ -76,30 +85,74 @@ class DeviceSchedulerViewModel: ViewModel() {
     }
 
 
-    suspend fun macAddressSet(macAddress: String, context: Context) {
+    suspend fun macAddressSetLocal(macAddress: String, context: Context) {
         context.myDataStore.edit {
-            it[MAC_ADDRESS] = macAddress
+            it[MAC_ADDRESS_LOCAL] = macAddress
         }
         Toast.makeText(context, R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
     }
-    fun MacSetLaunch(macAddressText: String, context: Context) {
+    fun MacSetLaunchLocal(macAddressText: String, context: Context) {
         viewModelScope.launch {
-            macAddressSet(macAddressText, context)
+            macAddressSetLocal(macAddressText, context)
+        }
+    }
+
+    suspend fun macAddressSetRemote(macAddress: String, context: Context) {
+        context.myDataStore.edit {
+            it[MAC_ADDRESS_REMOTE] = macAddress
+        }
+        Toast.makeText(context, R.string.toast_set_MAC, Toast.LENGTH_SHORT).show()
+    }
+    // this IP address is from the renote link and not of the device
+
+    fun MacSetLaunchRemote(macAddressText: String, context: Context) {
+        viewModelScope.launch {
+            macAddressSetRemote(macAddressText, context)
         }
     }
 
 
-    suspend fun IPAddressSet(ipaddress: String, context: Context) {
+    suspend fun IPAddressSetLocal(ipaddress: String, context: Context) {
         context.myDataStore.edit {
-            it[IP_ADDRESS] = ipaddress
+            it[IP_ADDRESS_LOCAL] = ipaddress
         }
         Toast.makeText(context, R.string.toast_set_IP, Toast.LENGTH_SHORT).show()
 
     }
 
-    fun IpSetLaunch(ipAddressText: String, context: Context) {
+    // this IP address is from the renote link and not of the device
+    fun IpSetLaunchLocal(ipAddressText: String, context: Context) {
         viewModelScope.launch {
-            IPAddressSet(ipAddressText, context)
+            IPAddressSetLocal(ipAddressText, context)
+        }
+    }
+
+    suspend fun IPAddressSetRemote(ipaddress: String, context: Context) {
+        context.myDataStore.edit {
+            it[IP_ADDRESS_REMOTE] = ipaddress
+        }
+        Toast.makeText(context, R.string.toast_set_IP, Toast.LENGTH_SHORT).show()
+
+    }
+
+    // this IP address is from the renote link and not of the device
+    fun IpSetLaunchRemote(ipAddressText: String, context: Context) {
+        viewModelScope.launch {
+            IPAddressSetRemote(ipAddressText, context)
+        }
+    }
+    suspend fun peerPortSet(port: Int, context: Context) {
+        context.myDataStore.edit {
+            it[PEER_PORT] = port
+        }
+        Toast.makeText(context, R.string.toast_set_IP, Toast.LENGTH_SHORT).show()
+
+    }
+
+    // this IP address is from the renote link and not of the device
+    fun peerPortSetLaunch(port: Int, context: Context) {
+        viewModelScope.launch {
+            peerPortSet(port, context)
         }
     }
 
@@ -373,7 +426,7 @@ class DeviceSchedulerViewModel: ViewModel() {
         return this in '0'..'9' || this in 'a'..'f' || this in 'A'..'F'
     }
 
-
+// this IP address is from the renote link and not of the device
     fun setIpAddressToString(message: ByteArray):String{
         //big endian
         lateinit var temp: String
@@ -412,7 +465,8 @@ class DeviceSchedulerViewModel: ViewModel() {
         lateinit var temp: ByteArray
         lateinit var tempString: String
         var i: Int=0
-        var  j: Int=5 // mac addres is 7 bytes
+
+        var  j: Int=5 // mac addres is 6 bytes
             macAddress.forEach { char ->
                 tempString += char.toString()
                 if (i == 1) {

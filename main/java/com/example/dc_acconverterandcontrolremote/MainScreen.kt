@@ -92,6 +92,7 @@ class ConstrainWithButtonsOnOff (val device_number:Int, val deviceName:(devicenb
                 fontWeight = FontWeight.Bold,
                 modifier = modifierText
             )
+
             val buttonOnData:ButtonstoONOFF = ButtonstoONOFF(device_number, on, modifierOn, model)
                 buttonOnData.buttonstoONOFF()
 

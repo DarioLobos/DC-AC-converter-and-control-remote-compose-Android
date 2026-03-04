@@ -1,9 +1,13 @@
 package com.example.dc_acconverterandcontrolremote
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import androidx.compose.ui.platform.LocalContext
 //import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -15,26 +19,36 @@ class MainActivity : ComponentActivity() {
 
    // private val model: DeviceSchedulerViewModel by viewModels()
 
+    @RequiresPermission(Manifest.permission.ACCESS_WIFI_STATE)
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
          setContent {
 
-            DC_ACConverterAndControlRemoteTheme {
-                DatabaseApplication()
-                val context= LocalContext.current
+             DC_ACConverterAndControlRemoteTheme {
+                 DatabaseApplication()
+                 val context = LocalContext.current
 
-                val modelComposeM3= viewModel<DeviceSchedulerViewModel>()
-                modelComposeM3.devicesDao= DevicesDataBase(applicationContext).daoDevices()
-                MainApp(context,modelComposeM3 )
-
-
-            }
+                 val modelComposeM3 = viewModel<DeviceSchedulerViewModel>()
+                 modelComposeM3.devicesDao = DevicesDataBase(applicationContext).daoDevices()
+                 MainApp(context, modelComposeM3)
+             }
+         }
+            val viewModel= DeviceSchedulerViewModel()
+            val aware= WifiAware(applicationContext,viewModel)
+            aware.discover()
+            aware.attachToWifi()
+        // these are pending to define
+             var macFilter:List<ByteArray> =listOf(viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_REMOTE.toString()))
+                     // these are pending to define pending define IPV6forphone
+         lateinit var serviceSpecificInfo : ByteArray
+            aware.susbcribe("ControlRemote",serviceSpecificInfo,macFilter)
         }
 
     }
-}
+
 
 
 
