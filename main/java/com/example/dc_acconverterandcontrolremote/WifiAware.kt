@@ -28,8 +28,14 @@ import android.net.wifi.aware.WifiAwareSession
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.io.DataOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import java.net.Inet6Address
 import java.net.InetAddress
@@ -37,6 +43,10 @@ import java.net.NetworkInterface
 import java.net.Socket
 import java.net.SocketException
 import java.util.Enumeration
+import kotlin.ByteArray
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
@@ -67,10 +77,15 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
     var socket: Socket? = null
 
     // pending definitions
-    var serviceSpecificInfo: ByteArray?=null
+    var serviceSpecificInfo: ByteArray? = null
 
     var matchFilter: List<ByteArray>? = null
 
+    lateinit var  clientThread: Thread
+
+    var flagReceived: Boolean=false
+
+    private val wifiMutex = Mutex()
 
     @RequiresApi(Build.VERSION_CODES.O)
     @RequiresPermission(Manifest.permission.ACCESS_WIFI_STATE)
@@ -164,7 +179,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                     val ipv6Temp: Inet6Address =
                         Inet6Address.getByAddress(viewModel.setIpStringToAddress(viewModel.IP_ADDRESS_REMOTE.toString())) as Inet6Address
 
-                   // socket = Socket(ipv6Temp, tempPort.toInt())
+                    // socket = Socket(ipv6Temp, tempPort.toInt())
                     socket = network.getSocketFactory().createSocket(ipv6Temp, tempPort.toInt())
                 }
 
@@ -289,124 +304,153 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun susbcribe(serviceName: String,serviceSpecificInfo: ByteArray, macFilter: List<ByteArray> ) {
-        this@WifiAware.matchFilter=macFilter
-        this@WifiAware.serviceSpecificInfo= serviceSpecificInfo
-        subscribeConfig = SubscribeConfig.Builder()
-            .setServiceName(serviceName)
-            .setServiceSpecificInfo(this@WifiAware.serviceSpecificInfo)
-            .setMatchFilter(this@WifiAware.matchFilter)
-            .setSubscribeType(SubscribeConfig.SUBSCRIBE_TYPE_ACTIVE)
-            .build()
+    fun subscribe(serviceName: String, serviceSpecificInfo: ByteArray, macFilter: List<ByteArray>) {
+        this@WifiAware.matchFilter = macFilter
+        this@WifiAware.serviceSpecificInfo = serviceSpecificInfo
 
-        wifiAwareSession!!.subscribe(subscribeConfig!!, object : DiscoverySessionCallback() {
+        if ((wifiAwareManager!!.isDeviceAttached) and (subscribeDiscoverySession == null)) {
+             subscribeConfig = SubscribeConfig.Builder()
+                    .setServiceName(serviceName)
+                    .setServiceSpecificInfo(this@WifiAware.serviceSpecificInfo)
+                    .setMatchFilter(this@WifiAware.matchFilter)
+                    .setSubscribeType(SubscribeConfig.SUBSCRIBE_TYPE_ACTIVE)
+                    .build()
 
-            override fun onServiceDiscovered(
-                peerHandle: PeerHandle,
-                serviceSpecificInfo: ByteArray,
-                matchFilter: List<ByteArray>
-            ) {
-                this@WifiAware.peerHandle= peerHandle
+             wifiAwareSession!!.subscribe(subscribeConfig!!, object : DiscoverySessionCallback() {
 
-                super.onServiceDiscovered(peerHandle, serviceSpecificInfo, matchFilter)
+                    override fun onServiceDiscovered(
+                        peerHandle: PeerHandle,
+                        serviceSpecificInfo: ByteArray,
+                        matchFilter: List<ByteArray>
+                 ) {
+                      this@WifiAware.peerHandle = peerHandle
+
+                      super.onServiceDiscovered(peerHandle, serviceSpecificInfo, matchFilter)
 
 
-                if (subscribeDiscoverySession != null ) {
-                    subscribeDiscoverySession!!.sendMessage(
-                        peerHandle, MAC_ADDRESS_MESSAGE,
-                        viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_LOCAL.toString()))
-                    println("onServiceDiscovered sending mac...")
-                }
+                        if (subscribeDiscoverySession != null) {
+                            subscribeDiscoverySession!!.sendMessage(
+                                peerHandle, MAC_ADDRESS_MESSAGE,
+                                viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_LOCAL.toString())
+                            )
+                            println("onServiceDiscovered sending mac...")
+                        }
 
+                    }
+
+
+                    override fun onSubscribeStarted(session: SubscribeDiscoverySession) {
+                        super.onSubscribeStarted(session);
+
+                        subscribeDiscoverySession = session;
+
+                        subscribeDiscoverySession!!.sendMessage(
+                            peerHandle!!, MAC_ADDRESS_MESSAGE,
+                            viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_LOCAL.toString())
+                        )
+                        println("onServiceStarted sending mac...")
+
+                    }
+
+
+                    override fun onMessageReceived(peerHandle: PeerHandle, message: ByteArray) {
+                        super.onMessageReceived(peerHandle, message)
+                        if (message.size == 2) {
+                            portToUse = viewModel.setPortToUse(message);
+                            println("received message, port = $portToUse")
+
+                        } else if (message.size == 6) {
+
+                            viewModel.MacSetLaunchRemote(
+                                viewModel.setMacAddressToString(message),
+                                context
+                            )
+
+                        } else if (message.size == 16) {;
+                            viewModel.IpSetLaunchRemote(
+                                viewModel.setIpAddressToString(message),
+                                context
+                            )
+
+    // this program will not use other message after this will use socket
+    //                    } else if (message.size > 16) {
+    //                        viewModel.receivedMessage(message);
+    //                        //Toast.makeText(MainActivity.this, "message received", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+             }, null)
             }
-
-
-            override fun onSubscribeStarted(session: SubscribeDiscoverySession) {
-                super.onSubscribeStarted(session);
-
-                subscribeDiscoverySession = session;
-
-                subscribeDiscoverySession!!.sendMessage(
-                    peerHandle!!, MAC_ADDRESS_MESSAGE,
-                    viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_LOCAL.toString())
-                )
-                println("onServiceStarted sending mac...")
-
-            }
-
-
-            override fun onMessageReceived(peerHandle: PeerHandle, message: ByteArray) {
-                super.onMessageReceived(peerHandle, message)
-                if (message.size == 2) {
-                    portToUse = viewModel.setPortToUse(message);
-                    println("received message, port = $portToUse")
-
-                } else if (message.size == 6) {
-
-                    viewModel.MacSetLaunchRemote(viewModel.setMacAddressToString(message), context)
-
-                } else if (message.size == 16) {;
-                    viewModel.IpSetLaunchRemote(viewModel.setIpAddressToString(message), context)
-
-// this program will not use other message after this will use socket
-//                    } else if (message.size > 16) {
-//                        viewModel.receivedMessage(message);
-//                        //Toast.makeText(MainActivity.this, "message received", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }, null)
-    }
-
-    fun sendData(data: ByteArray, dataType: Int) {
-
-        if (socket == null) {
-
-            val tempPort: String = viewModel.PEER_PORT.toString()
-
-            val ipv6Temp: Inet6Address =
-                Inet6Address.getByAddress(viewModel.setIpStringToAddress(viewModel.IP_ADDRESS_REMOTE.toString())) as Inet6Address
-
-            socket = Socket(ipv6Temp, tempPort.toInt())
-
         }
 
-        lateinit var arrayAndType: ByteArray
+    suspend fun sendData(data: ByteArray, dataType: Int) {
 
+            if (socket == null) {
+
+                val tempPort: String = viewModel.PEER_PORT.toString()
+
+                val ipv6Temp: Inet6Address =
+                    Inet6Address.getByAddress(viewModel.setIpStringToAddress(viewModel.IP_ADDRESS_REMOTE.toString())) as Inet6Address
+
+                socket = Socket(ipv6Temp, tempPort.toInt())
+
+            }
+
+        val arrayAndType = ByteArray(data.size + 1)
         arrayAndType[0] = dataType.toByte()
+        System.arraycopy(data, 0, arrayAndType, 1, data.size)
 
-        for (i in 1..data.size) {
-            arrayAndType[i] = data[i]
-        }
+        wifiMutex.withLock {
+            withContext(Dispatchers.IO) {
+                flagReceived=false
+                            try {
+                                val inputStream: InputStream=  socket!!.getInputStream()
+                                val outputStream: OutputStream = socket!!.getOutputStream()
+                                val dataOutputStream: DataOutputStream =
+                                    DataOutputStream(outputStream)
+                                dataOutputStream.write(arrayAndType, 0, arrayAndType.size)
+                                dataOutputStream.write(0xff)
+                                val result= inputStream.read()
+                                if (result != -1) {
+                                    flagReceived = true
+                                }
+                                dataOutputStream.close()
+                                inputStream.close()
+                                }
+                             catch (e: Exception) {
+                                println("data could not be sent in dataOutputStream")
+                            }
+                        }
+                    }
+            }
 
-        val clientTask: Runnable = Runnable {
-            @Override
-            fun run() {
-                try {
 
-                    val outputStream: OutputStream = socket!!.getOutputStream()
-                    val dataOutputStream: DataOutputStream = DataOutputStream(outputStream)
-                    dataOutputStream.write(arrayAndType, 0, arrayAndType.size)
-                    dataOutputStream.close()
-                } catch (e: Exception) {
-                    println("data could not be sent in dataOutputStream")
+
+    suspend fun startWiFiAwareandSubscribe(serviceName: String, serviceSpecificInfo: ByteArray, macFilter: List<ByteArray>){
+        coroutineScope {
+            launch {
+                launch {
+                    launch {
+                        discover()
+                    }
+                    attachToWifi()
                 }
+                subscribe(serviceName, serviceSpecificInfo, macFilter)
             }
         }
-        val clientThread = Thread(clientTask)
-        clientThread.start()
 
     }
 
-    private fun closeSession() {
-        if (wifiAwareSession != null) {
-                wifiAwareSession!!.close()
-            wifiAwareSession = null
-        }
-
-        if (wifiAwareSession != null) {
-                wifiAwareSession!!.close()
+    suspend fun closeSession() {
+            wifiMutex.withLock {
+                withContext(Dispatchers.IO) {
+                    socket?.close()
+                    socket = null
+                }
+                wifiAwareSession?.close()
+                wifiAwareSession = null
+                flagReceived = false
             }
-            wifiAwareSession = null
         }
-    }
+}
+
 

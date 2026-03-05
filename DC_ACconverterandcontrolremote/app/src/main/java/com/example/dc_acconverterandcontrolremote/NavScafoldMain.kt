@@ -1,5 +1,10 @@
 package com.example.dc_acconverterandcontrolremote
+import com.example.dc_acconverterandcontrolremote.R
+import android.Manifest
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
@@ -10,7 +15,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
@@ -20,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+
 
 enum class MenuList(
     @StringRes val label: Int,
@@ -33,9 +41,10 @@ enum class MenuList(
         SETTINGS(R.string.action_settings, Icons.Default.Settings, R.string.action_settings)
     }
 
-
+@RequiresApi(Build.VERSION_CODES.O)
+@RequiresPermission(Manifest.permission.ACCESS_WIFI_STATE)
 @Composable
-fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel){
+fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAware){
     var currentDestination by rememberSaveable { mutableStateOf(MenuList.HOME)}
     val scope = rememberCoroutineScope()
 
@@ -58,6 +67,19 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel){
             }
         }
     ){
+            FloatingActionButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = {
+                            aware.attachToWifi()
+                            var macFilter:List<ByteArray> =listOf(viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_REMOTE.toString()))
+                            // these are pending to define pending define IPV6forphone
+                            lateinit var serviceSpecificInfo : ByteArray
+                            aware.subscribe("ControlRemote",serviceSpecificInfo,macFilter)
+                }
+            ) {
+                Icon(Icons.Filled.Refresh, contentDescription = {stringResource(R.string.checkConnection)})
+            }
+
         val context = LocalContext.current
         when (currentDestination) {
             MenuList.HOME -> MainScreen (context, viewModel)
