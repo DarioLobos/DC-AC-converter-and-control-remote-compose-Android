@@ -27,6 +27,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
 enum class MenuList(
@@ -70,11 +72,9 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAw
             FloatingActionButton(
                 containerColor = MaterialTheme.colorScheme.primary,
                 onClick = {
-                            aware.attachToWifi()
-                            var macFilter:List<ByteArray> =listOf(viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_REMOTE.toString()))
-                            // these are pending to define pending define IPV6forphone
-                            lateinit var serviceSpecificInfo : ByteArray
-                            aware.subscribe("ControlRemote",serviceSpecificInfo,macFilter)
+                    GlobalScope.launch {
+                        aware.startWiFiAwareandSubscribe()
+                    }
                 }
             ) {
                 Icon(Icons.Filled.Refresh, contentDescription = {stringResource(R.string.checkConnection)})

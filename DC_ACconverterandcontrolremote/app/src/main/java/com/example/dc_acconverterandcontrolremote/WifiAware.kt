@@ -79,7 +79,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
     // pending definitions
     var serviceSpecificInfo: ByteArray? = null
 
-    var matchFilter: List<ByteArray>? = null
+    var matchFilter: List<ByteArray> = listOf(viewModel.getMatchFilterLaunch())
 
     lateinit var  clientThread: Thread
 
@@ -240,6 +240,8 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun discover(): Intent? {
+        if (viewModel.MATCH_FILTER.toString().length<6){
+        viewModel.setMatchFilterLaunch(byteArrayOf(1,2,3,4,5,6))}
 
         if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
 
@@ -304,17 +306,18 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun subscribe(serviceName: String, serviceSpecificInfo: ByteArray, macFilter: List<ByteArray>) {
-        this@WifiAware.matchFilter = macFilter
-        this@WifiAware.serviceSpecificInfo = serviceSpecificInfo
+    fun subscribe() {
+
+
+        subscribeConfig = SubscribeConfig.Builder()
+            .setServiceName(viewModel.serviceName)
+            .setServiceSpecificInfo(this@WifiAware.serviceSpecificInfo)
+            .setMatchFilter(this@WifiAware.matchFilter)
+            .build()
 
         if ((wifiAwareManager!!.isDeviceAttached) and (subscribeDiscoverySession == null)) {
-             subscribeConfig = SubscribeConfig.Builder()
-                    .setServiceName(serviceName)
-                    .setServiceSpecificInfo(this@WifiAware.serviceSpecificInfo)
-                    .setMatchFilter(this@WifiAware.matchFilter)
-                    .setSubscribeType(SubscribeConfig.SUBSCRIBE_TYPE_ACTIVE)
-                    .build()
+
+
 
              wifiAwareSession!!.subscribe(subscribeConfig!!, object : DiscoverySessionCallback() {
 
@@ -425,7 +428,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
 
 
-    suspend fun startWiFiAwareandSubscribe(serviceName: String, serviceSpecificInfo: ByteArray, macFilter: List<ByteArray>){
+    suspend fun startWiFiAwareandSubscribe(){
         coroutineScope {
             launch {
                 launch {
@@ -434,7 +437,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                     }
                     attachToWifi()
                 }
-                subscribe(serviceName, serviceSpecificInfo, macFilter)
+                subscribe()
             }
         }
 

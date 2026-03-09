@@ -40,8 +40,9 @@ fun TextToDeviceError (deviceText: String, isError: Boolean) {
 @Composable
 fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
 
-    var IpAddressText by remember { mutableStateOf(  model.IP_ADDRESS.toString()?:"")}
-    var MacAddressText by remember { mutableStateOf( model.MAC_ADDRESS.toString()?:"")}
+    var IpAddressText by remember { mutableStateOf(  model.IP_ADDRESS_REMOTE.toString()?:"")}
+    var MacAddressText by remember { mutableStateOf( model.MAC_ADDRESS_REMOTE.toString()?:"")}
+    var MatchFilterText by remember { mutableStateOf( model.MATCH_FILTER.toString()?:"")}
     var numberDevicesText by remember { mutableStateOf( model.NUMBER_DEVICES.toString()?:"")}
     var isBlurredIp by remember {   mutableStateOf(false)}
     var isBlurredMac by remember {  mutableStateOf(false)}
@@ -169,6 +170,30 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
                     )
                 }
             )
+        }
+
+            Row(modifier = Modifier
+                .wrapContentSize())
+            {
+
+
+
+                OutlinedTextField(
+                    modifier = Modifier.onFocusChanged { focusState ->
+                        if (!focusState.isFocused && isBlurredIp) {
+                            model.setMatchFilterLaunch(MatchFilterText)
+                            isBlurredIp = false
+                        }},
+                    value = MatchFilterText,
+                    onValueChange = { newText: String ->
+                        if (newText.all { it.isDigit()} and (newText.length>7)) {
+                            MatchFilterText = newText
+                        }
+
+                        if (isBlurredMac==false) isBlurredMac = true
+                    },
+                    label = {Text (stringResource(R.string.matchFilter))},
+                    singleLine = true)
         }
 
         Row(modifier = Modifier

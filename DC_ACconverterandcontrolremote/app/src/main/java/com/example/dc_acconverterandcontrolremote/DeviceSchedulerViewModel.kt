@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlin.text.forEach
 import kotlin.text.toInt
+import kotlin.math.pow
 
 class DeviceSchedulerViewModel: ViewModel() {
     init {
@@ -63,7 +64,11 @@ class DeviceSchedulerViewModel: ViewModel() {
     val IP_ADDRESS_REMOTE = stringPreferencesKey("ip_address")
 
     val PEER_PORT = intPreferencesKey("ip_address")
-    val NUMBER_DEVICES = intPreferencesKey("number_deices")
+    val NUMBER_DEVICES = intPreferencesKey("number_devices")
+
+    val MATCH_FILTER = StringPreferencesKey("match_filter")
+
+    val serviceName:String ="ControlRemote"
 
     val default_nbr_devices: Int = 8
 
@@ -84,6 +89,53 @@ class DeviceSchedulerViewModel: ViewModel() {
         }
     }
 
+    suspend fun setMatchFilter(byteArray: ByteArray){
+        var temp: String=""
+        for(i:Int in 0..byteArray.size-1){
+            temp += byteArray[i].toString()
+        }
+        // temp a;ready is a String and have /n
+
+        context.myDataStore.edit{
+
+            it[MATCH_FILTER] = temp
+        }
+    }
+    suspend fun setMatchFilter(filter: String){
+
+        context.myDataStore.edit{
+
+            it[MATCH_FILTER] = filter.toInt()
+        }
+    }
+
+    fun setMatchFilterLaunch(filter: String){
+        viewModelScope.launch {
+            setMatchFilter(filter)
+        }
+    }
+
+    fun setMatchFilterLaunch(byteArray: ByteArray){
+        viewModelScope.launch {
+            setMatchFilter(byteArray)
+        }
+    }
+    suspend fun getMatchFilter(): ByteArray {
+        var byteArray: ByteArray= ByteArray(7)
+        \
+        MATCH_FILTER.forEachIndexed { index:Int, char:Char ->
+
+            byteArray[index]=char.toString().toByte()
+        }
+        return byteArray
+    }
+    fun getMatchFilterLaunch(): ByteArray {
+        var byteArray: ByteArray= ByteArray(6)
+        viewModelScope.launch {
+            byteArray= getMatchFilter()
+        }
+    return byteArray
+    }
 
     suspend fun macAddressSetLocal(macAddress: String, context: Context) {
         context.myDataStore.edit {

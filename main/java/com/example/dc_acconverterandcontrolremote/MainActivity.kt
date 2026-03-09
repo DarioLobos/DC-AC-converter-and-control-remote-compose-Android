@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
         lateinit var serviceSpecificInfo: ByteArray
 
         GlobalScope.launch {
-            aware.startWiFiAwareandSubscribe("ControlRemote", serviceSpecificInfo, macFilter)
+            aware.startWiFiAwareandSubscribe()
         }
     }
 
