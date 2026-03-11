@@ -105,7 +105,7 @@ class DeviceSchedulerViewModel: ViewModel() {
 
         context.myDataStore.edit{
 
-            it[MATCH_FILTER] = filter.toInt()
+            it[MATCH_FILTER] = filter
         }
     }
 
@@ -121,20 +121,17 @@ class DeviceSchedulerViewModel: ViewModel() {
         }
     }
     suspend fun getMatchFilter(): ByteArray {
-        var byteArray: ByteArray= ByteArray(7)
-        \
-        MATCH_FILTER.forEachIndexed { index:Int, char:Char ->
-
-            byteArray[index]=char.toString().toByte()
-        }
-        return byteArray
+        val filterString = context.myDataStore.data
+            .map { it[MATCH_FILTER] ?: "123456" }.first()
+        return filterString.take(6).toByteArray(Charsets.UTF_8)
+    }
     }
     fun getMatchFilterLaunch(): ByteArray {
-        var byteArray: ByteArray= ByteArray(6)
-        viewModelScope.launch {
-            byteArray= getMatchFilter()
-        }
-    return byteArray
+
+    return runBlocking(Dispatchers.IO) {
+
+        val filterString =getMatchFilter()
+    }
     }
 
     suspend fun macAddressSetLocal(macAddress: String, context: Context) {

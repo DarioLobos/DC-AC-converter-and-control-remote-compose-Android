@@ -240,7 +240,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun discover(): Intent? {
-        if (viewModel.MATCH_FILTER.toString().length<6){
+        if (viewModel.MATCH_FILTER.toString().length<7){
         viewModel.setMatchFilterLaunch(byteArrayOf(1,2,3,4,5,6))}
 
         if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
