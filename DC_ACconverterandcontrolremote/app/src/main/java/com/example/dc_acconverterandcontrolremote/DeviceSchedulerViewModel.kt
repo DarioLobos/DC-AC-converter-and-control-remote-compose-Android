@@ -122,7 +122,7 @@ class DeviceSchedulerViewModel: ViewModel() {
     }
     suspend fun getMatchFilter(): ByteArray {
         val filterString = context.myDataStore.data
-            .map { it[MATCH_FILTER] ?: "123456" }.first()
+            .map { it[MATCH_FILTER]!! }.first()
         return filterString.take(6).toByteArray(Charsets.UTF_8)
     }
     }
@@ -266,8 +266,20 @@ class DeviceSchedulerViewModel: ViewModel() {
         }
     }
 
-    fun sendActionToWiFI(device_number: Int, on_or_off: String) {
-        // pending
+    fun sendActionToWiFI(device_number: Int, on_or_off: Boolean, aware: WifiAware) {
+        // data type same as IDF esp32
+        //macro to identify data for run control remote
+        // #define RECEIVED_C_REMOTE 2
+        val control_remote:int= 2
+
+        // to make a definition (same as IDF ESP32 program):
+        // the value for ON will be device_number x 2
+        // the value for OFF will be devicd_number x 2 + 1
+        // I set limit of devices in 100 and this will use 200 numbers
+
+        val byteArray: ByteArray= if(on_or_off) byteArrayOf((device_number*2).toByte()) else byteArrayOf((device_number*2+1).toByte())
+
+        aware.sendData(byteArray, control_remote)
     }
 
     fun deviceName(devicenbr: Int): String {

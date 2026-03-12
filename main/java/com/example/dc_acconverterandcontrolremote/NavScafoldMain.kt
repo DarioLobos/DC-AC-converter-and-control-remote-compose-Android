@@ -51,16 +51,11 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAw
     val scope = rememberCoroutineScope()
 
     NavigationSuiteScaffold(
-     //   containerColor = MaterialTheme.colorScheme.primary,
-     //   contentColor = MaterialTheme.colorScheme.onPrimary,
         navigationSuiteItems = {
             MenuList.entries.forEach {
                 item(
                     icon = {
-                        Icon(
-                            it.icon,
-                            contentDescription = stringResource(it.contentDescription
-                            ))
+                        Icon(it.icon, contentDescription = stringResource(it.contentDescription))
                     },
                     label = { Text(stringResource(it.label)) },
                     selected = it == currentDestination,
@@ -69,25 +64,39 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAw
             }
         }
     ){
+        // 1. Wrap in a Box so the FAB can float in the bottom corner
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            val localContext = LocalContext.current
+
+            // 2. The main screen content
+            when (currentDestination) {
+                // Pass 'aware' here to match our new MainScreen definition
+                MenuList.HOME -> MainScreen(localContext, viewModel, aware)
+                MenuList.VOLTAGES -> Voltage_Screen()
+                MenuList.CHARGERSCHEDULER -> ChargerScheduler_Screen()
+                MenuList.DEVICESSCHEDULER -> DataFromViewModel(viewModel)
+                MenuList.SETTINGS -> Settings_Screen(viewModel, localContext)
+            }
+
+            // 3. The FAB with correct modifier syntax
             FloatingActionButton(
                 containerColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd) // Works because it's in a Box
+                    .padding(16.dp),
                 onClick = {
-                    GlobalScope.launch {
+                    scope.launch {
                         aware.startWiFiAwareandSubscribe()
                     }
                 }
             ) {
-                Icon(Icons.Filled.Refresh, contentDescription = {stringResource(R.string.checkConnection)})
+                // Fixed: Removed the { }
+                Icon(
+                    Icons.Filled.Refresh,
+                    contentDescription = stringResource(R.string.checkConnection)
+                )
             }
-
-        val context = LocalContext.current
-        when (currentDestination) {
-            MenuList.HOME -> MainScreen (context, viewModel)
-            MenuList.VOLTAGES -> Voltage_Screen()
-            MenuList.CHARGERSCHEDULER -> ChargerScheduler_Screen()
-            MenuList.DEVICESSCHEDULER ->  DataFromViewModel(viewModel)
-            MenuList.SETTINGS -> Settings_Screen(viewModel, context)
-
         }
     }
 }

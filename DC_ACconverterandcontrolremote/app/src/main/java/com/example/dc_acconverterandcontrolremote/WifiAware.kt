@@ -430,18 +430,13 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
     suspend fun startWiFiAwareandSubscribe(){
         coroutineScope {
-            launch {
-                launch {
-                    launch {
-                        discover()
-                    }
-                    attachToWifi()
-                }
-                subscribe()
+            discover()
+            attachToWifi()
+            subscribe()
             }
         }
 
-    }
+
 
     suspend fun closeSession() {
             wifiMutex.withLock {
