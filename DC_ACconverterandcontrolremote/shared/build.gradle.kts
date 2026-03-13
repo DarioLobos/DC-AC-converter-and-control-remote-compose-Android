@@ -11,6 +11,9 @@ plugins {
 //    alias(libs.plugins.hilt)
 }
 
+room {
+    schemaDirectory("$projectDir/schemas")
+}
 
 
 

@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.*
 interface DaoDevices {
 
     @Query("SELECT * FROM devices")
+    fun getAllFlow(): Flow<List<Devices>>   // I AM TALKING ABOUT THIS IMPLEMENTATION
+    @Query("SELECT * FROM devices")
  public fun getAll(): List<Devices>
 
     @Query("SELECT * FROM devices WHERE device_number = :deviceId")
@@ -23,9 +25,9 @@ interface DaoDevices {
  public  suspend fun update(device: Devices)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
- public fun insert ( vararg device: Devices)
+ public suspend fun insert ( vararg device: Devices)
 
     @Delete
- public  fun delete(device: Devices)
+ public  suspend fun delete(device: Devices)
 
 }
