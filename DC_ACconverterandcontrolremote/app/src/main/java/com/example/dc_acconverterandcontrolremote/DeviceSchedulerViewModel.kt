@@ -32,6 +32,8 @@ import kotlin.text.forEach
 import kotlin.text.toInt
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlin.math.pow
 
 // 1. Move this OUTSIDE and ABOVE the class
@@ -57,8 +59,10 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
     private val context = getApplication<Application>().applicationContext
 
 
+    private val _isInitialized = MutableStateFlow(false)
+    // Public read-only state for the Composable
 
-
+    val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
 
 
     var devices: List<Devices>? = null
@@ -256,7 +260,10 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
                             devicesRepository.insertDevice(Devices(id = i, name = "Device $i"))
                         }
                     }
+                    _isInitialized.value(true)
+
                 }
+
             }
 
 

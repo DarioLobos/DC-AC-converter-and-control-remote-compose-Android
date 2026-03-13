@@ -26,41 +26,46 @@ import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.clickable
 import androidx.lifecycle.MutableLiveData
+import java.util.Calendar
 //import androidx.lifecycle.Observer
 //import androidx.lifecycle.ViewModel
 import kotlin.Int
+@Composable
 
-    @OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerDialog(
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: @Composable () -> Unit,
+    content: @Composable () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = confirmButton,
+        dismissButton = dismissButton,
+        text = { content() }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun editTextONOFF(context: Context, device_number: Int,
-                       on_or_off:Boolen, modifier: Modifier,
+                       on_or_off : Boolean, modifier: Modifier,
                       viewModel : DeviceSchedulerViewModel){
 
-        val hourForPicker: MutableLiveData<Int> by lazy {
-            MutableLiveData<Int>()
-        }
 
-        val minuteForPicker: MutableLiveData<Int> by lazy {
-            MutableLiveData<Int>()
-        }
-        var calendar by mutableStateOf(Calendar.getInstance())
-
-        hourForPicker.set(calendar[Calendar.HOUR_OF_DAY])
-
-        minuteForPicker.set(calendar[Calendar.MINUTE])
+        val calendar = Calendar.getInstance()
+        val timePickerState = rememberTimePickerState(
+            initialHour = calendar.get(Calendar.HOUR_OF_DAY),
+            initialMinute = calendar.get(Calendar.MINUTE),
+            is24Hour = true)
 
         val string_onoff: String = if (on_or_off) stringResource(R.string.ON) else stringResource(R.string.OFF)
 
-        var timeToShow by remember { mutableStateOf("") }
-        timeToShow= viewModel.TimesToshow(device_number, on_or_off)?:""
+        val timeToShow= viewModel.TimesToshow(device_number, on_or_off)?:""
 
         var showTimePicker by remember { mutableStateOf(false) }
 
-        val timePickerState = rememberTimePickerState(
-            initialHour = hourForPicker,
-            initialMinute = minuteForPicker,
-            is24Hour = true
-        )
 
         Box(propagateMinConstraints = false) {
             Column(
@@ -71,200 +76,180 @@ import kotlin.Int
                 showTimePicker = false
 
                 TextField(
-                    readOnly = false,
+                    readOnly = true,
                     enabled = false,
                     value = timeToShow,
                     onValueChange = { /* ... */ },
-                    label =  string_onoff ,
+                    label = { Text(string_onoff) },
                     singleLine = true,
                     placeholder = { Text(stringResource(R.string.click)) },
                     modifier = modifier.clickable {
-
-                        hourForPicker.set(calendar[Calendar.HOUR_OF_DAY])
-
-                        minuteForPicker.set(calendar[Calendar.MINUTE])
-
                         showTimePicker = true
                     }
                 )
 
 
                 if (showTimePicker) {
-
-                    TimePicker(
-                        state = timePickerState,
-
-                        Modifier.fillMaxSize()
-                    )
-                    Button(
-
-                        onClick = {
-                            showTimePicker = false
-                            Toast.makeText(context, R.string.setTimeCancel, Toast.LENGTH_SHORT)
-                                .show()
-                        })
-                    {
-                        Text(stringResource(R.string.cancel))
-                    }
-
-                    Button(
-                        onClick = {
-
-                            viewModel.setselectedTime(
-                                timePickerState.hour, timePickerState.minute,
-                                device_number, on_or_off)
-                            timeToShow= viewModel.TimesToshow(device_number, on_or_off)
-                            showTimePicker = false
-                            Toast.makeText(context, R.string.setTimeRecorded, Toast.LENGTH_SHORT)
-                                .show()
-                        }) {
-                        Text(stringResource(R.string.confirm))
-
-
+                    TimePickerDialog(
+                        onDismissRequest = { showTimePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                viewModel.setselectedTime(
+                                    timePickerState.hour,
+                                    timePickerState.minute,
+                                    device_number,
+                                    on_or_off
+                                )
+                                showTimePicker = false
+                                Toast.makeText(context, R.string.setTimeRecorded, Toast.LENGTH_SHORT).show()
+                            }) { Text(stringResource(R.string.confirm)) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showTimePicker = false }) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                        }
+                    ) {
+                        TimePicker(state = timePickerState)
                     }
                 }
             }
         }
-    }
 
 
 @Composable
 fun DeviceControlCard( context: Context, device_number: Int,
-                       on_or_off:Boolen,
                        viewModel : DeviceSchedulerViewModel ) {
 
 
-        ConstraintLayout(
-            Modifier
-                .wrapContentSize()
-                .background(color = MaterialTheme.colorScheme.background)
-        ) {
+    ConstraintLayout(
+        Modifier
+            .wrapContentSize()
+            .background(color = MaterialTheme.colorScheme.background)
+    ) {
 
-            val on: String = stringResource(R.string.ON)
-            val off: String = stringResource(R.string.OFF)
-            val (editOn, editOff, titleName, timeOn, timeOff, daysOfWeek) = createRefs()
+        val on: String = stringResource(R.string.ON)
+        val off: String = stringResource(R.string.OFF)
+        val (editOn, editOff, titleName, timeOn, timeOff, daysOfWeek) = createRefs()
 
-            val modifierText: Modifier = Modifier
-                .constrainAs(titleName) {
-                    top.linkTo(parent.top, margin = 10.dp)
-                    bottom.linkTo(editOff.top, margin = 10.dp)
-                    centerHorizontallyTo(parent)
-                }
-
-            val modifierTextON: Modifier = Modifier
-                .constrainAs(timeOn) {
-                    top.linkTo(titleName.bottom, margin = 5.dp)
-                    bottom.linkTo(daysOfWeek.top, margin = 5.dp)
-                    end.linkTo(editOn.start)
-                }
-
-            val modifierEditOn: Modifier = Modifier
-                .constrainAs(editOn) {
-                    top.linkTo(titleName.bottom, margin = 5.dp)
-                    bottom.linkTo(daysOfWeek.top, margin = 5.dp)
-                    start.linkTo(timeOn.end)
-                    end.linkTo(editOff.start)
-                }
-
-            val modifierTextOFF: Modifier = Modifier
-                .constrainAs(timeOff) {
-                    top.linkTo(titleName.bottom, margin = 5.dp)
-                    bottom.linkTo(daysOfWeek.top, margin = 5.dp)
-                    start.linkTo(editOn.end)
-                    end.linkTo(editOff.start)
-                }
-
-            val modifierEditOff: Modifier = Modifier
-                .constrainAs(editOff) {
-                    top.linkTo(titleName.bottom, margin = 5.dp)
-                    bottom.linkTo(daysOfWeek.top, margin = 5.dp)
-                    start.linkTo(timeOff.end)
-                }
-
-
-            val modifierRButtonDaysOfWeek = Modifier
-                .wrapContentSize()
-                .constrainAs(daysOfWeek) {
-                    top.linkTo(editOn.bottom, margin = 5.dp)
-                    bottom.linkTo(parent.bottom, margin = 5.dp)
-                    centerHorizontallyTo(parent)
-                }
-
-
-            Text(
-                text = viewModel.deviceName(device_number),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = modifierText
-            )
-            Text(
-                text = stringResource(R.string.timeOn),
-                color = MaterialTheme.colorScheme.onPrimary,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = modifierTextON
-            )
-            Text(
-                text = stringResource(R.string.timeOFF),
-                color = MaterialTheme.colorScheme.onPrimary,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = modifierTextOFF
-            )
-
-            EditTextONOFF( context, device_number, true, modifierEditOn, viewModel)
-
-            EditTextONOFF( context, device_number, false, modifierEditOFF, viewModel)
-
-            createHorizontalChain(
-                editOn, editOff,
-                chainStyle = ChainStyle.SpreadInside
-            )
-
-            val options = listOf(
-                stringResource(R.string.Sun), stringResource(R.string.Mon),
-                stringResource(R.string.Tue), stringResource(R.string.Wed),
-                stringResource(R.string.Thu), stringResource(R.string.Fri),
-                stringResource(R.string.Sat)
-            )
-
-            val selectedOptions =
-                remember { mutableStateListOf(false, false, false, false, false, false, false) }
-
-            MultiChoiceSegmentedButtonRow(modifier = modifierRButtonDaysOfWeek) {
-                options.forEachIndexed { index, label ->
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = options.size
-                        ),
-                        checked = selectedOptions[index],
-                        onCheckedChange = {
-                            selectedOptions[index] = !selectedOptions[index]
-                            viewModel.selectedDays(device_number, index, selectedOptions[index])
-                        },
-                        label = { options[index] }
-
-                    )
-                }
+        val modifierText: Modifier = Modifier
+            .constrainAs(titleName) {
+                top.linkTo(parent.top, margin = 10.dp)
+                bottom.linkTo(editOff.top, margin = 10.dp)
+                centerHorizontallyTo(parent)
             }
 
+        val modifierTextON: Modifier = Modifier
+            .constrainAs(timeOn) {
+                top.linkTo(titleName.bottom, margin = 5.dp)
+                bottom.linkTo(daysOfWeek.top, margin = 5.dp)
+                end.linkTo(editOn.start)
+            }
+
+        val modifierEditOn: Modifier = Modifier
+            .constrainAs(editOn) {
+                top.linkTo(titleName.bottom, margin = 5.dp)
+                bottom.linkTo(daysOfWeek.top, margin = 5.dp)
+                start.linkTo(timeOn.end)
+                end.linkTo(editOff.start)
+            }
+
+        val modifierTextOFF: Modifier = Modifier
+            .constrainAs(timeOff) {
+                top.linkTo(titleName.bottom, margin = 5.dp)
+                bottom.linkTo(daysOfWeek.top, margin = 5.dp)
+                start.linkTo(editOn.end)
+                end.linkTo(editOff.start)
+            }
+
+        val modifierEditOff: Modifier = Modifier
+            .constrainAs(editOff) {
+                top.linkTo(titleName.bottom, margin = 5.dp)
+                bottom.linkTo(daysOfWeek.top, margin = 5.dp)
+                start.linkTo(timeOff.end)
+            }
+
+
+        val modifierRButtonDaysOfWeek = Modifier
+            .wrapContentSize()
+            .constrainAs(daysOfWeek) {
+                top.linkTo(editOn.bottom, margin = 5.dp)
+                bottom.linkTo(parent.bottom, margin = 5.dp)
+                centerHorizontallyTo(parent)
+            }
+
+
+        Text(
+            text = viewModel.deviceName(device_number),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = modifierText
+        )
+        Text(
+            text = stringResource(R.string.timeOn),
+            color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = modifierTextON
+        )
+        Text(
+            text = stringResource(R.string.timeOFF),
+            color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = modifierTextOFF
+        )
+
+        editTextONOFF(context, device_number, true, modifierEditOn, viewModel)
+
+        editTextONOFF(context, device_number, false, modifierEditOff, viewModel)
+
+        createHorizontalChain(
+            editOn, editOff,
+            chainStyle = ChainStyle.SpreadInside
+        )
+
+        val options = listOf(
+            stringResource(R.string.Sun), stringResource(R.string.Mon),
+            stringResource(R.string.Tue), stringResource(R.string.Wed),
+            stringResource(R.string.Thu), stringResource(R.string.Fri),
+            stringResource(R.string.Sat)
+        )
+
+        val selectedOptions =
+            remember { mutableStateListOf(false, false, false, false, false, false, false) }
+
+        MultiChoiceSegmentedButtonRow(modifier = modifierRButtonDaysOfWeek) {
+            options.forEachIndexed { index, label ->
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = options.size
+                    ),
+                    checked = selectedOptions[index],
+                    onCheckedChange = {
+                        selectedOptions[index] = !selectedOptions[index]
+                        viewModel.selectedDays(device_number, index, selectedOptions[index])
+                    },
+                    label = { options[index] }
+
+                )
+            }
         }
-
-
+    }
+}
     }
 
 
 
 
     @Composable
-    fun deviceScheduler_Screen( context: Context, device_number: Int,
-                                on_or_off:Boolen,
+    fun deviceScheduler_Screen( context: Context,
                                 viewModel : DeviceSchedulerViewModel ) {
 
-        val isReady by model.isInitialized.collectAsState()
+        val isReady by viewModel.isInitialized.collectAsState()
 
-        val devicesListSize: Int = model.deviceList()?.size ?: 0
+        val devicesListSize: Int = viewModel.deviceList()?.size ?: 0
 
         if (!isReady) {
             // Center the loader
@@ -281,10 +266,7 @@ fun DeviceControlCard( context: Context, device_number: Int,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 items(devicesListSize) {
-                        ConstrainWithEditTextOnOff(
-                            context, device_number,
-                            on_or_off,
-                            viewModel )
+                    DeviceControlCard( context,it, viewModel)
 
                 }
             }

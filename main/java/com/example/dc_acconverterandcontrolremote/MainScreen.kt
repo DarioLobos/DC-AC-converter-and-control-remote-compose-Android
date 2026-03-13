@@ -112,7 +112,7 @@ fun MainScreen(context: Context, model: DeviceSchedulerViewModel, aware: WifiAwa
         if (model.devicesDao.getAllCount() == 0) {
             model.devicesInit(context)
         }
-        model.deviceListInit()
+        model.devicesInit()
         model.setInitialized(true)
     }
 
