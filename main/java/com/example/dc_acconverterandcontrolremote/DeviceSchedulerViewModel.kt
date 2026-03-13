@@ -34,18 +34,6 @@ class DeviceSchedulerViewModel: ViewModel() {
     }
 
 
-    val hourSet: MutableLiveData<Int> by lazy {
-        MutableLiveData<Int>()
-    }
-
-    val minuteSet: MutableLiveData<Int> by lazy {
-        MutableLiveData<Int>()
-    }
-    var calendar by mutableStateOf(Calendar.getInstance())
-
-    var hourForPicker by mutableStateOf(calendar[Calendar.HOUR_OF_DAY])
-
-    var minuteForPicker by mutableStateOf(calendar[Calendar.MINUTE])
 
 
     var devices: List<Devices>? = null
@@ -64,6 +52,7 @@ class DeviceSchedulerViewModel: ViewModel() {
     val IP_ADDRESS_REMOTE = stringPreferencesKey("ip_address")
 
     val PEER_PORT = intPreferencesKey("ip_address")
+
     val NUMBER_DEVICES = intPreferencesKey("number_devices")
 
     val MATCH_FILTER = StringPreferencesKey("match_filter")
@@ -122,10 +111,12 @@ class DeviceSchedulerViewModel: ViewModel() {
     }
     suspend fun getMatchFilter(): ByteArray {
         val filterString = context.myDataStore.data
-            .map { it[MATCH_FILTER]!! }.first()
-        return filterString.take(6).toByteArray(Charsets.UTF_8)
+            .map { it[MATCH_FILTER]?:"123456\n" }.first()
+        return filterString.take(7).toByteArray(Charsets.UTF_8)
     }
+
     }
+
     fun getMatchFilterLaunch(): ByteArray {
 
     return runBlocking(Dispatchers.IO) {
@@ -145,6 +136,20 @@ class DeviceSchedulerViewModel: ViewModel() {
             macAddressSetLocal(macAddressText, context)
         }
     }
+suspend fun macAddressGetLocal(): String?{
+    val temp: String = context.myDataStore.data
+        .map { it[MAC_ADDRESS_LOCAL]?:null}
+    return temp
+}
+
+fun getMacAddressLocalLaunch(): String? {
+
+    return runBlocking(Dispatchers.IO) {
+
+        val temp =macAddressGetLocal()
+    }
+}
+
 
     suspend fun macAddressSetRemote(macAddress: String, context: Context) {
         context.myDataStore.edit {
@@ -160,6 +165,19 @@ class DeviceSchedulerViewModel: ViewModel() {
         }
     }
 
+suspend fun macAddressGetRemote(): String?{
+    val temp = context.myDataStore.data
+        .map { it[MAC_ADDRESS_REMOTE]?:null}
+    return temp
+}
+
+fun getMacAddressRemoteLaunch(): String? {
+
+    return runBlocking(Dispatchers.IO) {
+
+        val temp =macAddressGetRemote()
+    }
+}
 
     suspend fun IPAddressSetLocal(ipaddress: String, context: Context) {
         context.myDataStore.edit {
@@ -176,6 +194,21 @@ class DeviceSchedulerViewModel: ViewModel() {
         }
     }
 
+suspend fun IpAddressGetLocal(): String?{
+    val temp = context.myDataStore.data
+        .map { it[IP_ADDRESS_LOCAL]?:null}
+    return temp
+}
+
+fun getIpAddressLocalLaunch(): String? {
+
+    return runBlocking(Dispatchers.IO) {
+
+        val temp =IpAddressGetLocal()
+    }
+}
+
+
     suspend fun IPAddressSetRemote(ipaddress: String, context: Context) {
         context.myDataStore.edit {
             it[IP_ADDRESS_REMOTE] = ipaddress
@@ -190,6 +223,22 @@ class DeviceSchedulerViewModel: ViewModel() {
             IPAddressSetRemote(ipAddressText, context)
         }
     }
+
+suspend fun IpAddressGetRemote(): String?{
+    val temp = context.myDataStore.data
+        .map { it[IP_ADDRESS_REMOTE]?:null}
+    return temp
+}
+
+fun getIpAddressRemoteLaunch(): String? {
+
+    return runBlocking(Dispatchers.IO) {
+
+        val temp =IpAddressGetRemote()
+    }
+}
+
+
     suspend fun peerPortSet(port: Int, context: Context) {
         context.myDataStore.edit {
             it[PEER_PORT] = port
@@ -205,6 +254,19 @@ class DeviceSchedulerViewModel: ViewModel() {
         }
     }
 
+suspend fun peerPortGet(): Int?{
+    val temp = context.myDataStore.data
+        .map { it[PEER_PORT]?:null}
+    return temp
+}
+
+fun getPeerPortLaunch(): Int? {
+
+    return runBlocking(Dispatchers.IO) {
+
+        val temp =peerPortGet()
+    }
+}
 
 
     suspend fun devicesInit(context: Context) {
@@ -223,7 +285,8 @@ class DeviceSchedulerViewModel: ViewModel() {
 
         var temp: List<Devices>?=null
         if (devicesDao != null) {
-            viewModelScope.launch {
+
+            runBlocking(Dispatchers.IO){
                temp = devicesDao.getAll()
             }
             return temp
@@ -285,34 +348,22 @@ class DeviceSchedulerViewModel: ViewModel() {
     fun deviceName(devicenbr: Int): String {
 
         var device = devicesDao.getItem(devicenbr)
-        var name: String = ""
 
-        viewModelScope.launch {
-            name = device.toList().get(0).device_name!!
+        return runBlocking(Dispatchers.IO) {
+         val name = device.toList().get(0).device_name!!
         }
-
-        return name
     }
 
 
-    fun setselectedTime(
-        hourToSeT: Int,
-        minuteToSet: Int,
-        device_number: Int,
-        on_or_off: String,
-        string_onoff: String
+    fun setselectedTime(hourToSet: Int, minuteToSet: Int, device_number: Int, on_or_off: Boolean
     ): String {
+
         var device: MutableList<Devices>? = null
-        devicesDao.getItem(device_number)
 
-        viewModelScope.launch {
-            devicesDao.getItem(device_number).toList(device!!)
-
+        runBlocking(Dispatchers.IO) {
+            device.add(devicesDao.getItem(device_number))
         }
 
-        viewModelScope.launch {
-            device!!.toList()
-        }
 
         if ((hourToSeT >= 0) and ((minuteToSet >= 0))) {
 
@@ -333,29 +384,24 @@ class DeviceSchedulerViewModel: ViewModel() {
         return "$hourSet : $minuteSet"
     }
 
-    fun TimesToshow(device_number: Int, on_or_off: String, string_onoff: String): String? {
+    fun TimesToshow(device_number: Int, on_or_off: Boolean): String? {
 
         var device: MutableList<Devices>? = null
 
-        viewModelScope.launch {
-            devicesDao.getItem(device_number).toList(device!!)
-
-        }
-
-        viewModelScope.launch {
-            device!!.toList()
+        runBlocking(Dispatchers.IO) {
+            device.add(devicesDao.getItem(device_number))
         }
 
         var timeToShow: String? = null
 
-        if (on_or_off == string_onoff) {
-            hourSet.setValue(device!!.get(0).hour_on!!)
-            minuteSet.setValue(device!!.get(0).minutes_on!!)
+        if (on_or_off) {
+            val hourSet= device!!.get(0).hour_on!!
+            val minuteSet= device!!.get(0).minutes_on!!
             timeToShow = "$hourSet : $minuteSet"
 
         } else {
-            hourSet.setValue(device!!.get(0).hour_off!!)
-            minuteSet.setValue(device!!.get(0).minutes_off!!)
+            val hourSet= device!!.get(0).hour_off!!
+            val minuteSet= device!!.get(0).minutes_off!!
             timeToShow = "$hourSet : $minuteSet"
 
         }
@@ -367,10 +413,10 @@ class DeviceSchedulerViewModel: ViewModel() {
 
         var device: MutableList<Devices>? = null
 
-        viewModelScope.launch {
-            devicesDao.getItem(device_number).toList(device!!)
-
+        runBlocking(Dispatchers.IO) {
+            device.add(devicesDao.getItem(device_number))
         }
+
         var days_week: Int = device!!.toList().get(0).days_week!!
 
         when (option) {

@@ -219,7 +219,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                                     if (subscribeDiscoverySession != null && peerHandle != null) {
                                         subscribeDiscoverySession!!.sendMessage(
                                             peerHandle!!, IP_ADDRESS_MESSAGE,
-                                            viewModel.setIpStringToAddress(viewModel.IP_ADDRESS_LOCAL.toString())
+                                            viewModel.setIpStringToAddress(viewModel.getIpAddressLocalLaunch()!!)
                                         );
 
                                     }
@@ -241,7 +241,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun discover(): Intent? {
         if (viewModel.MATCH_FILTER.toString().length<7){
-        viewModel.setMatchFilterLaunch(byteArrayOf(1,2,3,4,5,6))}
+        viewModel.setMatchFilterLaunch(byteArrayOf(1,2,3,4,5,6,))}
 
         if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
 
@@ -334,7 +334,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                         if (subscribeDiscoverySession != null) {
                             subscribeDiscoverySession!!.sendMessage(
                                 peerHandle, MAC_ADDRESS_MESSAGE,
-                                viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_LOCAL.toString())
+                                viewModel.setMacStringToAddress(viewModel.getMacAddressLocalLaunch()!!)
                             )
                             println("onServiceDiscovered sending mac...")
                         }
@@ -349,7 +349,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
                         subscribeDiscoverySession!!.sendMessage(
                             peerHandle!!, MAC_ADDRESS_MESSAGE,
-                            viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_LOCAL.toString())
+                            viewModel.setMacStringToAddress(viewModel.getMacAddressLocalLaunch()!!)
                         )
                         println("onServiceStarted sending mac...")
 
@@ -392,7 +392,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                 val tempPort: String = viewModel.PEER_PORT.toString()
 
                 val ipv6Temp: Inet6Address =
-                    Inet6Address.getByAddress(viewModel.setIpStringToAddress(viewModel.IP_ADDRESS_REMOTE.toString())) as Inet6Address
+                    Inet6Address.getByAddress(viewModel.setIpStringToAddress(viewModel.getIpAddressRemoteLaunch()!!)) as Inet6Address
 
                 socket = Socket(ipv6Temp, tempPort.toInt())
 

@@ -30,45 +30,31 @@ import androidx.lifecycle.MutableLiveData
 //import androidx.lifecycle.ViewModel
 import kotlin.Int
 
-@Composable
-fun DataFromViewModel(model: DeviceSchedulerViewModel) {
-
-    val context: Context = LocalContext.current
-
-    //val device_numberObserver = Observer<Int> {}
-    //val on_or_offObserver = Observer<String> {}
-    //val deviceObserver = Observer<String> {}
-    //val hourSetObserver = Observer<Int> {}
-    //val minuteSet = Observer<Int> {}
-
-
-    val deviceScheduler= DeviceScheduler_Screen(
-        model,context, model.hourForPicker, model.minuteForPicker, model::TimesToshow,
-        model::setselectedTime, model::selectedDays, model::deviceName)
-
-    deviceScheduler.deviceScheduler_Screen()
-
-}
-
-
-class EditTextONOFF (val context: Context,val device_number: Int,
-val on_or_off:String,val modifier: Modifier,val
-hourForPicker: Int,val minuteForPicker: Int,
-val TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String)-> String?,
-val setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_off: String,string_onoff: String)-> String) {
-
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun editTextONOFF() {
+    fun editTextONOFF(context: Context, device_number: Int,
+                       on_or_off:Boolen, modifier: Modifier,
+                      viewModel : DeviceSchedulerViewModel){
 
-        val device_number_keeper: Int = device_number
-        val on_or_off_keeper: String = on_or_off
-        val string_onoff: String = stringResource(R.string.ON)
+        val hourForPicker: MutableLiveData<Int> by lazy {
+            MutableLiveData<Int>()
+        }
+
+        val minuteForPicker: MutableLiveData<Int> by lazy {
+            MutableLiveData<Int>()
+        }
+        var calendar by mutableStateOf(Calendar.getInstance())
+
+        hourForPicker.set(calendar[Calendar.HOUR_OF_DAY])
+
+        minuteForPicker.set(calendar[Calendar.MINUTE])
+
+        val string_onoff: String = if (on_or_off) stringResource(R.string.ON) else stringResource(R.string.OFF)
+
         var timeToShow by remember { mutableStateOf("") }
-        timeToShow = TimesToshow(device_number_keeper, on_or_off_keeper, string_onoff)
-            ?: stringResource(R.string.click)
-//        var selectedTime: TimePickerState? by remember { mutableStateOf(null) }
-        var showTimePicker by remember { mutableStateOf(true) }
+        timeToShow= viewModel.TimesToshow(device_number, on_or_off)?:""
+
+        var showTimePicker by remember { mutableStateOf(false) }
 
         val timePickerState = rememberTimePickerState(
             initialHour = hourForPicker,
@@ -82,17 +68,22 @@ val setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_of
                     .wrapContentSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                showTimePicker = true
+                showTimePicker = false
 
                 TextField(
                     readOnly = false,
                     enabled = false,
                     value = timeToShow,
                     onValueChange = { /* ... */ },
-                    label = { Text(on_or_off) },
+                    label =  string_onoff ,
                     singleLine = true,
                     placeholder = { Text(stringResource(R.string.click)) },
                     modifier = modifier.clickable {
+
+                        hourForPicker.set(calendar[Calendar.HOUR_OF_DAY])
+
+                        minuteForPicker.set(calendar[Calendar.MINUTE])
+
                         showTimePicker = true
                     }
                 )
@@ -119,10 +110,10 @@ val setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_of
                     Button(
                         onClick = {
 
-                            setselectedTime(
+                            viewModel.setselectedTime(
                                 timePickerState.hour, timePickerState.minute,
-                                device_number_keeper, on_or_off_keeper, string_onoff
-                            )
+                                device_number, on_or_off)
+                            timeToShow= viewModel.TimesToshow(device_number, on_or_off)
                             showTimePicker = false
                             Toast.makeText(context, R.string.setTimeRecorded, Toast.LENGTH_SHORT)
                                 .show()
@@ -136,19 +127,12 @@ val setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_of
         }
     }
 
-}
 
-class ConstrainWithEditTextOnOff(val context: Context, val device_number: Int,
-                                 val hourForPicker: Int, val  minuteForPicker: Int,
-                                 val TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String)-> String?,
-                                 val setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_off: String,string_onoff: String)-> String,
-                                 val selectedDays:(daysselected: Int, option: Int, selectedOptions: Boolean)->Unit,
-                                 val deviceName:(devicenbr:Int )->String) {
+@Composable
+fun DeviceControlCard( context: Context, device_number: Int,
+                       on_or_off:Boolen,
+                       viewModel : DeviceSchedulerViewModel ) {
 
-    @Composable
-    fun constrainWithEditTextOnOff() {
-
-        val device_number_keeper: Int = device_number
 
         ConstraintLayout(
             Modifier
@@ -208,7 +192,7 @@ class ConstrainWithEditTextOnOff(val context: Context, val device_number: Int,
 
 
             Text(
-                text = deviceName(device_number_keeper),
+                text = viewModel.deviceName(device_number),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = modifierText
@@ -227,19 +211,11 @@ class ConstrainWithEditTextOnOff(val context: Context, val device_number: Int,
                 fontWeight = FontWeight.Bold,
                 modifier = modifierTextOFF
             )
-            val editTextOn: EditTextONOFF = EditTextONOFF(
-                context, device_number, on,
-                modifierEditOn, hourForPicker, minuteForPicker,
-                TimesToshow, setselectedTime
-            )
-            editTextOn.editTextONOFF()
 
-            val editTextOff: EditTextONOFF = EditTextONOFF(
-                context, device_number, off,
-                modifierEditOff, hourForPicker,
-                minuteForPicker, TimesToshow, setselectedTime)
+            EditTextONOFF( context, device_number, true, modifierEditOn, viewModel)
 
-            editTextOff.editTextONOFF()
+            EditTextONOFF( context, device_number, false, modifierEditOFF, viewModel)
+
             createHorizontalChain(
                 editOn, editOff,
                 chainStyle = ChainStyle.SpreadInside
@@ -265,7 +241,7 @@ class ConstrainWithEditTextOnOff(val context: Context, val device_number: Int,
                         checked = selectedOptions[index],
                         onCheckedChange = {
                             selectedOptions[index] = !selectedOptions[index]
-                            selectedDays(device_number_keeper, index, selectedOptions[index])
+                            viewModel.selectedDays(device_number, index, selectedOptions[index])
                         },
                         label = { options[index] }
 
@@ -277,42 +253,40 @@ class ConstrainWithEditTextOnOff(val context: Context, val device_number: Int,
 
 
     }
-}
 
-class DeviceScheduler_Screen(val model: DeviceSchedulerViewModel,val context: Context,
-                             val hourForPicker: Int, val minuteForPicker: Int,
-                             val TimesToshow:(device_number: Int, on_or_off: String, string_onoff: String)-> String?,
-                             val setselectedTime:(hourToSeT: Int,minuteToSet: Int,device_number: Int,on_or_off: String,string_onoff: String)-> String,
-                             val selectedDays:(daysselected: Int, option: Int, selectedOptions: Boolean)->Unit,
-                             val deviceName:(devicenbr:Int )->String) {
 
-    val constrainWithEditText = mutableListOf<ConstrainWithEditTextOnOff>()
+
 
     @Composable
-    fun deviceScheduler_Screen() {
+    fun deviceScheduler_Screen( context: Context, device_number: Int,
+                                on_or_off:Boolen,
+                                viewModel : DeviceSchedulerViewModel ) {
 
+        val isReady by model.isInitialized.collectAsState()
 
         val devicesListSize: Int = model.deviceList()?.size ?: 0
 
+        if (!isReady) {
+            // Center the loader
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
 
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2), Modifier
+                    .wrapContentSize()
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                items(devicesListSize) {
+                        ConstrainWithEditTextOnOff(
+                            context, device_number,
+                            on_or_off,
+                            viewModel )
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2), Modifier
-                .wrapContentSize()
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            items(devicesListSize) {
-                constrainWithEditText.add(
-                    ConstrainWithEditTextOnOff(
-                        context, it,
-                         hourForPicker, minuteForPicker,
-                        TimesToshow, setselectedTime, selectedDays, deviceName
-                    )
-                )
-                constrainWithEditText[it].constrainWithEditTextOnOff()
+                }
             }
         }
     }
-}
