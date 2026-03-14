@@ -410,61 +410,45 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
 
     // this IP address is from the renote link and not of the device
     fun setIpAddressToString(message: ByteArray): String {
-        //big endian
-        lateinit var temp: String
-
-        for (i in 0..message.size) {
-            temp += message[i].toString()
+        // Standard IPv4: [192, 168, 1, 1] -> "192.168.1.1"
+        return message.joinToString(".") { byte ->
+            (byte.toInt() and 0xFF).toString()
         }
-        return temp
     }
 
     fun setIpStringToAddress(ipAddress: String): ByteArray {
-        // big endian
-        lateinit var temp: ByteArray
+        val parts = ipAddress.split(".")
+        val temp = ByteArray(4)
 
-        ipAddress.forEach { char ->
-            var i: Int = 0
-            temp[i] = char.toString().toByte()
-            i++
+        for (i in 0 until 4) {
+            // Handle potential empty or malformed strings safely
+            temp[i] = parts.getOrElse(i) { "0" }.toInt().toByte()
         }
-
         return temp
-        }
+    }
 
     fun setMacAddressToString(message: ByteArray): String {
-        //big endian
-        lateinit var temp: String
-
-        for (i in 0..message.size) {
-            temp += message[i].toHexString()
+        // Standard Big Endian: [AA, BB, CC, DD, EE, FF] -> "AABBCCDDEEFF"
+        return message.joinToString("") { byte ->
+            "%02X".format(byte)
         }
-        return temp
     }
 
     fun setMacStringToAddress(macAddress: String): ByteArray {
-            // little endian
-        lateinit var temp: ByteArray
-        lateinit var tempString: String
-        var i: Int = 0
+        // Ensures we have exactly 6 bytes (12 hex characters)
+        val cleanMac = macAddress.replace(":", "").uppercase()
+        val temp = ByteArray(6)
 
-        var j: Int = 5 // mac addres is 6 bytes
-        macAddress.forEach { char ->
-            tempString += char.toString()
-            if (i == 1) {
-                tempString = "0x$tempString"
-                temp[j] = tempString.toByte()
-                tempString = ""
-                i = 0
-                j-- // should be from 5 to 0
-            }
-            i++
-            }
+        for (i in 0 until 6) {
+            val hexPair = cleanMac.substring(i * 2, i * 2 + 2)
+            // Big Endian: index 0 of string goes to index 0 of array
+            temp[i] = hexPair.toInt(16).toByte()
+        }
         return temp
     }
 
-
     fun setPortToUse(message: ByteArray): Int {
+
         val portToUse: Int =
             ((message[1].toInt().and(0xFF)).shl(8)) or (message[0].toInt().and(0xFF))
             //PENDING

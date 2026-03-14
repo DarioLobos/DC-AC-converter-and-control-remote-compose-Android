@@ -47,9 +47,10 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
     var isBlurredIp by remember {   mutableStateOf(false)}
     var isBlurredMac by remember {  mutableStateOf(false)}
     var isBlurredDev by  remember { mutableStateOf(false)}
+    var isBlurredMat by  remember { mutableStateOf(false)}
     val isErrorMac: Boolean =  ( macAddressText.length!=12) or ( macAddressText.isEmpty())
     val isErrorIp: Boolean =  ( ipAddressText.length!=12) or ( ipAddressText.isEmpty())
-    val isErrorDev: Boolean =  ( numberDevicesText.toInt()>100) or ( numberDevicesText.isEmpty())
+    val isErrorDev: Boolean = ((numberDevicesText.toIntOrNull() ?: 0) > 100) || (numberDevicesText.isEmpty())
     val isErrorMat: Boolean =  ( matchFilterText.length!=7) or ( matchFilterText.isEmpty())
 
     Box(propagateMinConstraints = false) {
@@ -64,17 +65,17 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
          {
              OutlinedTextField(
                  modifier = Modifier.onFocusChanged { focusState ->
-                     if (!focusState.isFocused && isBlurredMac) {
+                     if (!focusState.isFocused && isBlurredIp) {
                          model.IpSetLaunchLocal(ipAddressText,context )
-                         isBlurredMac = false
+                         isBlurredIp = false
                      }},
                  value = ipAddressText,
                  onValueChange = { newText: String ->
                      if (newText.all { it.isDigit() }) {
-                         if (newText.length==12){
+                         if (newText.length<13){
                          ipAddressText = newText}
                      }
-                     if (!isBlurredMac) isBlurredMac = true
+                     if (!isBlurredIp) isBlurredIp = true
                  },
                  isError = isErrorIp,
                  supportingText = {TextToAddressError(ipAddressText, isErrorIp)},
@@ -86,7 +87,7 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
                      var out = ""
                      for (i in text.indices) {
                          out += text[i]
-                         if (i % 3 == 2 && i < 12) out += "."
+                         if (i % 3 == 2 && i < 11) out += "."
                      }
                      TransformedText(
                          text = AnnotatedString(out),
@@ -121,16 +122,16 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
             
             OutlinedTextField(
                 modifier = Modifier.onFocusChanged { focusState ->
-                    if (!focusState.isFocused && isBlurredIp) {
+                    if (!focusState.isFocused && isBlurredMac) {
                         model.MacSetLaunchLocal(macAddressText,context )
-                        isBlurredIp = false
+                        isBlurredMac = false
                     }},
                 value = macAddressText,
                 onValueChange = { newText: String ->
-                    if (newText.all { it.isDigit() or (it in 'a'..'f') or (it in 'A'..'F') }) {
+                    // Allow if empty OR if it contains valid Hex and is within length
+                    if (newText.isEmpty() || (newText.all { it.isDigit() || (it in 'a'..'f') || (it in 'A'..'F') } && newText.length <= 12)) {
                         macAddressText = newText
                     }
-
                     if (!isBlurredMac) isBlurredMac = true
                 },
                 isError = isErrorMac,
@@ -143,29 +144,38 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
                     var out = ""
                     for (i in text.indices) {
                         out += text[i]
-                        if (i % 2 == 1 && i < 12) out += "."
+                        // Add a dot after the 3rd, 6th, and 9th characters only.
+                        // Index 11 is the 12th character; we don't want a dot after it.
+                        if (i % 2 == 1 && i < 10) out += "."
                     }
                     TransformedText(
                         text = AnnotatedString(out),
+                        // Inside MAC OutlinedTextField VisualTransformation
                         offsetMapping = object : OffsetMapping {
                             override fun originalToTransformed(offset: Int): Int {
-                                if (offset < 2) return offset
-                                if (offset < 4) return offset + 1
-                                if (offset < 6) return offset + 2
-                                if (offset < 8) return offset + 3
-                                if (offset < 10) return offset + 4
-                                return 17
+                                // Add +1 for every dot (at indices 2, 4, 6, 8, 10)
+                                return when {
+                                    offset <= 2 -> offset
+                                    offset <= 4 -> offset + 1
+                                    offset <= 6 -> offset + 2
+                                    offset <= 8 -> offset + 3
+                                    offset <= 10 -> offset + 4
+                                    offset <= 12 -> offset + 5
+                                    else -> 17
+                                }
                             }
 
                             override fun transformedToOriginal(offset: Int): Int {
-                                if (offset < 3) return offset
-                                if (offset < 5) return offset - 1
-                                if (offset < 7) return offset - 2
-                                if (offset < 9) return offset - 3
-                                if (offset < 11) return offset - 4
-                                return 12
+                                return when {
+                                    offset <= 2 -> offset
+                                    offset <= 5 -> offset - 1
+                                    offset <= 8 -> offset - 2
+                                    offset <= 11 -> offset - 3
+                                    offset <= 14 -> offset - 4
+                                    offset <= 17 -> offset - 5
+                                    else -> 12
+                                }
                             }
-
                         }
 
                     )
@@ -181,18 +191,18 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
 
                 OutlinedTextField(
                     modifier = Modifier.onFocusChanged { focusState ->
-                        if (!focusState.isFocused && isBlurredIp) {
+                        if (!focusState.isFocused && isBlurredMat) {
                             model.setMatchFilterLaunch(matchFilterText)
-                            isBlurredIp = false
+                            isBlurredMat = false
                         }},
                     value = matchFilterText,
                     isError = isErrorMat,
                     onValueChange = { newText: String ->
-                        if (newText.all { it.isDigit()} and (newText.length>7)) {
+                        if (newText.all { it.isDigit()} and (newText.length<8)) {
                             matchFilterText = newText
                         }
 
-                        if (!isBlurredMac) isBlurredMac = true
+                        if (!isBlurredMat) isBlurredMat = true
                     },
                     label = {Text (stringResource(R.string.matchFilter))},
                     singleLine = true)
@@ -208,15 +218,24 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
                         isBlurredIp = false
                     }},
                 value = numberDevicesText,
-                onValueChange = { newText: String ->
-                    if (newText.all { it.isDigit()  }) {
-                        if (newText.toInt()< 100){
-                        numberDevicesText = newText
+                onValueChange = { newText ->
+                    if (newText.isEmpty()) {
+                        // 1. Allow the user to clear the field (no crash!)
+                        numberDevicesText = ""
+                    } else {
+                        // 2. Check if it's a number
+                        val numericValue = newText.toIntOrNull()
+                        if (numericValue != null) {
+                            // 3. Only update if it's within your range (0-100)
+                            if (numericValue <= 100) {
+                                numberDevicesText = newText
+                            }
+                        }
                     }
-                    }
-
+                    // 4. Mark that the field has changed to trigger the save later
                     if (!isBlurredDev) isBlurredDev = true
-                },
+                }
+                ,
                 isError = isErrorDev,
                 supportingText = {TextToDeviceError(numberDevicesText, isErrorDev)},
                 enabled = true,

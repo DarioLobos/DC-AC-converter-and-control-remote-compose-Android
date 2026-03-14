@@ -19,7 +19,7 @@ android {
     }
 
     room {
-        schemaDirectory("$projectDir/schemas")
+        schemaDirectory("${project.projectDir}/schemas")
     }
 
     defaultConfig {

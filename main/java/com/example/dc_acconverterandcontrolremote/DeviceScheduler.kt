@@ -26,6 +26,7 @@ import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.foundation.clickable
 import java.util.Calendar
 import kotlin.Int
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun TimePickerDialog(
     onDismissRequest: () -> Unit,
@@ -241,7 +242,7 @@ fun DeviceControlCard( context: Context, device_number: Int, deviceName: String,
 fun DeviceScheduler_Screen( context: Context,
                             viewModel : DeviceSchedulerViewModel ) {
     // 1. Monitor the signal
-    val isReady by viewModel.isInitialized.collectAsState()
+    val isReady by viewModel.isInitialized.collectAsStateWithLifecycle()
 
     // 2. Capture the SNAPSHOT once initialization is finished
     val devices = remember(isReady) {

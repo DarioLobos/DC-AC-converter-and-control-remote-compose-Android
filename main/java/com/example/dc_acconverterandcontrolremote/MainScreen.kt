@@ -23,6 +23,7 @@ import androidx.constraintlayout.compose.ChainStyle
 import com.example.dc_acconverterandcontrolremote.R
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.DevicesDataBase
 import kotlinx.coroutines.flow.toList
 
@@ -107,7 +108,7 @@ fun DeviceControlCard(
 @Composable
 fun MainScreen(context: Context, model: DeviceSchedulerViewModel, aware: WifiAware) {
     // Collect the StateFlow from your ViewModel
-    val isReady by model.isInitialized.collectAsState()
+    val isReady by model.isInitialized.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
           if(!model.isInitialized.value) {
