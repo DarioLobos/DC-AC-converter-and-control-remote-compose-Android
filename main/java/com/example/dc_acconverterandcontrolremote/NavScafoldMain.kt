@@ -11,6 +11,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Build
@@ -25,9 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.GlobalScope
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 
@@ -43,7 +48,6 @@ enum class MenuList(
         SETTINGS(R.string.action_settings, Icons.Default.Settings, R.string.action_settings)
     }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @RequiresPermission(Manifest.permission.ACCESS_WIFI_STATE)
 @Composable
 fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAware){
@@ -75,7 +79,7 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAw
                 MenuList.HOME -> MainScreen(localContext, viewModel, aware)
                 MenuList.VOLTAGES -> Voltage_Screen()
                 MenuList.CHARGERSCHEDULER -> ChargerScheduler_Screen()
-                MenuList.DEVICESSCHEDULER -> DataFromViewModel(viewModel)
+                MenuList.DEVICESSCHEDULER -> DeviceScheduler_Screen( context, viewModel)
                 MenuList.SETTINGS -> Settings_Screen(viewModel, localContext)
             }
 

@@ -62,4 +62,6 @@
     <string name="wifiReceived">received message</string>
     <string name="checkConnection">Check connection</string>
     <string name="matchFilter">WIFI match filter</string>
+    <string name="PeerPortSet">Peer port set</string>
+
 </resources>

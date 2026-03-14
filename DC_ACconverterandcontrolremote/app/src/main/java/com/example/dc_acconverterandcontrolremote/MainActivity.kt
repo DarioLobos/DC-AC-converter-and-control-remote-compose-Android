@@ -21,8 +21,11 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    //private val model: DeviceSchedulerViewModel by viewModels()
-    val viewModel = DeviceSchedulerViewModel()
+    val application = DatabaseApplication()
+    val database = application.databaseContainer.devicesRepository
+
+    val viewModel  = DeviceSchedulerViewModel(database , application)
+
     val aware = WifiAware(applicationContext, viewModel)
 
     @RequiresPermission(Manifest.permission.ACCESS_WIFI_STATE)
@@ -34,15 +37,11 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             DC_ACConverterAndControlRemoteTheme {
-                DatabaseApplication()
-                val context = LocalContext.current
-                val modelComposeM3 = viewModel<DeviceSchedulerViewModel>()
-                modelComposeM3.devicesDao = DevicesDataBase(applicationContext).daoDevices()
-                MainApp(context, modelComposeM3, aware)
+
+                MainApp(LocalContext.current, viewModel, aware)
+
             }
         }
-
-
     }
 
     @RequiresPermission(Manifest.permission.ACCESS_WIFI_STATE)

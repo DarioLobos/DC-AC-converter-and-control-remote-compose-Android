@@ -23,15 +23,9 @@ import androidx.compose.material3.TimePicker
 //import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.clickable
-import androidx.lifecycle.MutableLiveData
 import java.util.Calendar
-//import androidx.lifecycle.Observer
-//import androidx.lifecycle.ViewModel
 import kotlin.Int
-@Composable
-
 @Composable
 fun TimePickerDialog(
     onDismissRequest: () -> Unit,
@@ -49,76 +43,79 @@ fun TimePickerDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun editTextONOFF(context: Context, device_number: Int,
+    fun EditTextONOFF(context: Context, device_number: Int,
                        on_or_off : Boolean, modifier: Modifier,
-                      viewModel : DeviceSchedulerViewModel){
+                      viewModel : DeviceSchedulerViewModel) {
 
 
-        val calendar = Calendar.getInstance()
-        val timePickerState = rememberTimePickerState(
-            initialHour = calendar.get(Calendar.HOUR_OF_DAY),
-            initialMinute = calendar.get(Calendar.MINUTE),
-            is24Hour = true)
+    val calendar = Calendar.getInstance()
+    val timePickerState = rememberTimePickerState(
+        initialHour = calendar.get(Calendar.HOUR_OF_DAY),
+        initialMinute = calendar.get(Calendar.MINUTE),
+        is24Hour = true
+    )
 
-        val string_onoff: String = if (on_or_off) stringResource(R.string.ON) else stringResource(R.string.OFF)
+    val string_onoff: String =
+        if (on_or_off) stringResource(R.string.ON) else stringResource(R.string.OFF)
 
-        val timeToShow= viewModel.TimesToshow(device_number, on_or_off)?:""
+    val timeToShow = viewModel.TimesToshow(device_number, on_or_off) ?: ""
 
-        var showTimePicker by remember { mutableStateOf(false) }
-
-
-        Box(propagateMinConstraints = false) {
-            Column(
-                modifier = Modifier
-                    .wrapContentSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                showTimePicker = false
-
-                TextField(
-                    readOnly = true,
-                    enabled = false,
-                    value = timeToShow,
-                    onValueChange = { /* ... */ },
-                    label = { Text(string_onoff) },
-                    singleLine = true,
-                    placeholder = { Text(stringResource(R.string.click)) },
-                    modifier = modifier.clickable {
-                        showTimePicker = true
-                    }
-                )
+    var showTimePicker by remember { mutableStateOf(false) }
 
 
-                if (showTimePicker) {
-                    TimePickerDialog(
-                        onDismissRequest = { showTimePicker = false },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                viewModel.setselectedTime(
-                                    timePickerState.hour,
-                                    timePickerState.minute,
-                                    device_number,
-                                    on_or_off
-                                )
-                                showTimePicker = false
-                                Toast.makeText(context, R.string.setTimeRecorded, Toast.LENGTH_SHORT).show()
-                            }) { Text(stringResource(R.string.confirm)) }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showTimePicker = false }) {
-                                Text(stringResource(R.string.cancel))
-                            }
+    Box(propagateMinConstraints = false) {
+        Column(
+            modifier = Modifier
+                .wrapContentSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            showTimePicker = false
+
+            TextField(
+                readOnly = true,
+                enabled = false,
+                value = timeToShow,
+                onValueChange = { /* ... */ },
+                label = { Text(string_onoff) },
+                singleLine = true,
+                placeholder = { Text(stringResource(R.string.click)) },
+                modifier = modifier.clickable {
+                    showTimePicker = true
+                }
+            )
+
+
+            if (showTimePicker) {
+                TimePickerDialog(
+                    onDismissRequest = { showTimePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            viewModel.setselectedTime(
+                                timePickerState.hour,
+                                timePickerState.minute,
+                                device_number,
+                                on_or_off
+                            )
+                            showTimePicker = false
+                            Toast.makeText(context, R.string.setTimeRecorded, Toast.LENGTH_SHORT)
+                                .show()
+                        }) { Text(stringResource(R.string.confirm)) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showTimePicker = false }) {
+                            Text(stringResource(R.string.cancel))
                         }
-                    ) {
-                        TimePicker(state = timePickerState)
                     }
+                ) {
+                    TimePicker(state = timePickerState)
                 }
             }
         }
-
+    }
+}
 
 @Composable
-fun DeviceControlCard( context: Context, device_number: Int,
+fun DeviceControlCard( context: Context, device_number: Int, deviceName: String,
                        viewModel : DeviceSchedulerViewModel ) {
 
 
@@ -128,8 +125,6 @@ fun DeviceControlCard( context: Context, device_number: Int,
             .background(color = MaterialTheme.colorScheme.background)
     ) {
 
-        val on: String = stringResource(R.string.ON)
-        val off: String = stringResource(R.string.OFF)
         val (editOn, editOff, titleName, timeOn, timeOff, daysOfWeek) = createRefs()
 
         val modifierText: Modifier = Modifier
@@ -180,7 +175,7 @@ fun DeviceControlCard( context: Context, device_number: Int,
 
 
         Text(
-            text = viewModel.deviceName(device_number),
+            text = deviceName,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
             modifier = modifierText
@@ -200,9 +195,9 @@ fun DeviceControlCard( context: Context, device_number: Int,
             modifier = modifierTextOFF
         )
 
-        editTextONOFF(context, device_number, true, modifierEditOn, viewModel)
+        EditTextONOFF(context, device_number, true, modifierEditOn, viewModel)
 
-        editTextONOFF(context, device_number, false, modifierEditOff, viewModel)
+        EditTextONOFF(context, device_number, false, modifierEditOff, viewModel)
 
         createHorizontalChain(
             editOn, editOff,
@@ -238,20 +233,24 @@ fun DeviceControlCard( context: Context, device_number: Int,
         }
     }
 }
-    }
+
 
 
 
 
     @Composable
-    fun deviceScheduler_Screen( context: Context,
+    fun DeviceScheduler_Screen( context: Context,
                                 viewModel : DeviceSchedulerViewModel ) {
 
         val isReady by viewModel.isInitialized.collectAsState()
 
-        val devicesListSize: Int = viewModel.deviceList()?.size ?: 0
+        lateinit var devices: List<Devices>
+
 
         if (!isReady) {
+
+            devices = viewModel.devicesList()
+
             // Center the loader
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -265,8 +264,8 @@ fun DeviceControlCard( context: Context, device_number: Int,
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                items(devicesListSize) {
-                    DeviceControlCard( context,it, viewModel)
+                items(devices.size) {
+                    DeviceControlCard( context,it,devices[it].device_name!!, viewModel)
 
                 }
             }

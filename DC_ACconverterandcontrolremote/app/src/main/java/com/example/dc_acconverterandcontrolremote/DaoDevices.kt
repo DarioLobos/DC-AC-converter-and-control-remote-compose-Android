@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.*
 interface DaoDevices {
 
     @Query("SELECT * FROM devices")
-    fun getAllFlow(): Flow<List<Devices>>   // I AM TALKING ABOUT THIS IMPLEMENTATION
+    fun getAllFlow(): Flow<List<Devices>>
+
     @Query("SELECT * FROM devices")
  public fun getAll(): List<Devices>
 

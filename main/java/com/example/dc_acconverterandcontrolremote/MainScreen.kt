@@ -24,6 +24,7 @@ import com.example.dc_acconverterandcontrolremote.R
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.DevicesDataBase
+import kotlinx.coroutines.flow.toList
 
 // 1. Logic-only Button Component
 @Composable
@@ -109,11 +110,9 @@ fun MainScreen(context: Context, model: DeviceSchedulerViewModel, aware: WifiAwa
     val isReady by model.isInitialized.collectAsState()
 
     LaunchedEffect(Unit) {
-        if (model.devicesDao.getAllCount() == 0) {
-            model.devicesInit(context)
-        }
-        model.devicesInit()
-        model.setInitialized(true)
+          if(!model.isInitialized.value) {
+              model.devicesInit()
+          }
     }
 
     if (!isReady) {
@@ -122,7 +121,8 @@ fun MainScreen(context: Context, model: DeviceSchedulerViewModel, aware: WifiAwa
             CircularProgressIndicator()
         }
     } else {
-        val devices = model.deviceList() ?: emptyList()
+        val devices = model.devicesList()
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
@@ -133,7 +133,7 @@ fun MainScreen(context: Context, model: DeviceSchedulerViewModel, aware: WifiAwa
                 // Make sure this name matches your defined function below
                 DeviceControlCard(
                     deviceNumber = index,
-                    deviceName = model.deviceName(index),
+                    deviceName = devices[index].device_name!!,
                     model = model,
                     aware = aware
                 )

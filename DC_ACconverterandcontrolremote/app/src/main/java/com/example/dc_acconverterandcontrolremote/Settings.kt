@@ -22,9 +22,9 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
-fun TextToAddressError (AddressText: String, isError: Boolean ) {
+fun TextToAddressError (addressText: String, isError: Boolean ) {
     if (isError) {
-        if (AddressText.isEmpty()) Text(stringResource(R.string.required))
+        if (addressText.isEmpty()) Text(stringResource(R.string.required))
         else Text(stringResource(R.string.more12))
 
     }
@@ -40,16 +40,17 @@ fun TextToDeviceError (deviceText: String, isError: Boolean) {
 @Composable
 fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
 
-    var IpAddressText by remember { mutableStateOf(  model.IP_ADDRESS_REMOTE.toString()?:"")}
-    var MacAddressText by remember { mutableStateOf( model.MAC_ADDRESS_REMOTE.toString()?:"")}
-    var MatchFilterText by remember { mutableStateOf( model.MATCH_FILTER.toString()?:"")}
-    var numberDevicesText by remember { mutableStateOf( model.NUMBER_DEVICES.toString()?:"")}
+    var ipAddressText by remember { mutableStateOf(  model.IP_ADDRESS_REMOTE.toString())}
+    var macAddressText by remember { mutableStateOf( model.MAC_ADDRESS_REMOTE.toString())}
+    var matchFilterText by remember { mutableStateOf( model.MATCH_FILTER.toString())}
+    var numberDevicesText by remember { mutableStateOf( model.NUMBER_DEVICES.toString())}
     var isBlurredIp by remember {   mutableStateOf(false)}
     var isBlurredMac by remember {  mutableStateOf(false)}
     var isBlurredDev by  remember { mutableStateOf(false)}
-    val isErrorMac: Boolean =  ( MacAddressText.length>12) or ( MacAddressText.isEmpty())
-    val isErrorIp: Boolean =  ( IpAddressText.length>12) or ( IpAddressText.isEmpty())
+    val isErrorMac: Boolean =  ( macAddressText.length!=12) or ( macAddressText.isEmpty())
+    val isErrorIp: Boolean =  ( ipAddressText.length!=12) or ( ipAddressText.isEmpty())
     val isErrorDev: Boolean =  ( numberDevicesText.toInt()>100) or ( numberDevicesText.isEmpty())
+    val isErrorMat: Boolean =  ( matchFilterText.length!=7) or ( matchFilterText.isEmpty())
 
     Box(propagateMinConstraints = false) {
         Column(
@@ -64,19 +65,19 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
              OutlinedTextField(
                  modifier = Modifier.onFocusChanged { focusState ->
                      if (!focusState.isFocused && isBlurredMac) {
-                         model.IpSetLaunch(IpAddressText,context )
+                         model.IpSetLaunchLocal(ipAddressText,context )
                          isBlurredMac = false
                      }},
-                 value = IpAddressText,
+                 value = ipAddressText,
                  onValueChange = { newText: String ->
                      if (newText.all { it.isDigit() }) {
                          if (newText.length==12){
-                         IpAddressText = newText}
+                         ipAddressText = newText}
                      }
-                     if (isBlurredMac==false) isBlurredMac = true
+                     if (!isBlurredMac) isBlurredMac = true
                  },
                  isError = isErrorIp,
-                 supportingText = {TextToAddressError(IpAddressText, isErrorIp)},
+                 supportingText = {TextToAddressError(ipAddressText, isErrorIp)},
                  enabled = true,
                  readOnly = false,
                  label = { Text (stringResource(R.string.ipAddress))},
@@ -121,19 +122,19 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
             OutlinedTextField(
                 modifier = Modifier.onFocusChanged { focusState ->
                     if (!focusState.isFocused && isBlurredIp) {
-                        model.MacSetLaunch(MacAddressText,context )
+                        model.MacSetLaunchLocal(macAddressText,context )
                         isBlurredIp = false
                     }},
-                value = MacAddressText,
+                value = macAddressText,
                 onValueChange = { newText: String ->
                     if (newText.all { it.isDigit() or (it in 'a'..'f') or (it in 'A'..'F') }) {
-                        MacAddressText = newText
+                        macAddressText = newText
                     }
 
-                    if (isBlurredMac==false) isBlurredMac = true
+                    if (!isBlurredMac) isBlurredMac = true
                 },
                 isError = isErrorMac,
-                supportingText = { TextToAddressError(MacAddressText, isErrorMac)},
+                supportingText = { TextToAddressError(macAddressText, isErrorMac)},
                 enabled = true,
                 readOnly = false,
                 label = {Text (stringResource(R.string.macAddress))},
@@ -181,16 +182,17 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
                 OutlinedTextField(
                     modifier = Modifier.onFocusChanged { focusState ->
                         if (!focusState.isFocused && isBlurredIp) {
-                            model.setMatchFilterLaunch(MatchFilterText)
+                            model.setMatchFilterLaunch(matchFilterText)
                             isBlurredIp = false
                         }},
-                    value = MatchFilterText,
+                    value = matchFilterText,
+                    isError = isErrorMat,
                     onValueChange = { newText: String ->
                         if (newText.all { it.isDigit()} and (newText.length>7)) {
-                            MatchFilterText = newText
+                            matchFilterText = newText
                         }
 
-                        if (isBlurredMac==false) isBlurredMac = true
+                        if (!isBlurredMac) isBlurredMac = true
                     },
                     label = {Text (stringResource(R.string.matchFilter))},
                     singleLine = true)
@@ -201,8 +203,8 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
         {
             OutlinedTextField(
                 modifier = Modifier.onFocusChanged { focusState ->
-                    if (!focusState.isFocused && isBlurredIp) {
-                        model.numberSetLaunch(numberDevicesText,context )
+                    if (!focusState.isFocused && isBlurredDev) {
+                        model.numberSetLaunch(numberDevicesText)
                         isBlurredIp = false
                     }},
                 value = numberDevicesText,
@@ -213,7 +215,7 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
                     }
                     }
 
-                    if (isBlurredIp==false) isBlurredIp = true
+                    if (!isBlurredDev) isBlurredDev = true
                 },
                 isError = isErrorDev,
                 supportingText = {TextToDeviceError(numberDevicesText, isErrorDev)},
