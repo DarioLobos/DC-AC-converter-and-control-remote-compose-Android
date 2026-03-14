@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.text.forEach
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +45,26 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
         super.onCleared()
         println("Viewmodel on Cleaning...")
     }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                // 1. Grab the Application instance from the platform
+                val app = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as DatabaseApplication)
+
+                // 2. Grab the Repository from your AppContainer
+                val repo = app.databaseContainer.devicesRepository
+
+                // 3. Pass BOTH to your constructor exactly as you defined it
+                DeviceSchedulerViewModel(
+                    devicesRepository = repo,
+                    application = app
+                )
+            }
+        }
+    }
+
+
 
     // Access the context safely using getApplication()
     @SuppressLint("StaticFieldLeak")
@@ -232,15 +255,18 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
 
     fun devicesInit() {
         viewModelScope.launch(Dispatchers.IO) {
-            // Collect current devices from the repository stream once
             val currentDevices = devicesRepository.getAllDevicesStream().first()
 
             if (currentDevices.isEmpty()) {
                 for (i in 1..default_nbr_devices) {
-                    devicesRepository.insertDevice(Devices(device_number = i, device_name = "Device $i"))
+                    devicesRepository.insertDevice(
+                        Devices(device_number = i, device_name = "Device $i")
+                    )
                 }
-                _isInitialized.emit(true)
             }
+
+            // Use .value for a fast, synchronous state update
+            _isInitialized.value = true
         }
     }
 

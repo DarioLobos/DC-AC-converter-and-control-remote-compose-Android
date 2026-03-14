@@ -237,37 +237,40 @@ fun DeviceControlCard( context: Context, device_number: Int, deviceName: String,
 
 
 
+@Composable
+fun DeviceScheduler_Screen( context: Context,
+                            viewModel : DeviceSchedulerViewModel ) {
+    // 1. Monitor the signal
+    val isReady by viewModel.isInitialized.collectAsState()
 
-    @Composable
-    fun DeviceScheduler_Screen( context: Context,
-                                viewModel : DeviceSchedulerViewModel ) {
+    // 2. Capture the SNAPSHOT once initialization is finished
+    val devices = remember(isReady) {
+        if (isReady) viewModel.allDevices.value else emptyList()
+    }
 
-        val isReady by viewModel.isInitialized.collectAsState()
+    // 3. Trigger the Main() init routine
+    LaunchedEffect(Unit) {
+        if (!viewModel.isInitialized.value) {
+            viewModel.devicesInit()
+        }
+    }
 
-        lateinit var devices: List<Devices>
+    if (!isReady) {
+        CircularProgressIndicator()
+    } else {
+        // Now it's safe to use devices.size and devices[index]
+        // because they won't change until the next app restart.
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2), Modifier
+                .wrapContentSize()
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            items(devices.size) {
+                DeviceControlCard( context,it,devices[it].device_name!!, viewModel)
 
-
-        if (!isReady) {
-
-            devices = viewModel.devicesList()
-
-            // Center the loader
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2), Modifier
-                    .wrapContentSize()
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                items(devices.size) {
-                    DeviceControlCard( context,it,devices[it].device_name!!, viewModel)
-
-                }
             }
         }
     }
+}

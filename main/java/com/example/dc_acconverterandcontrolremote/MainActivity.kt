@@ -8,38 +8,37 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-//import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.dc_acconverterandcontrolremote.DevicesDatabase.Companion.DevicesDataBase
+import androidx.lifecycle.lifecycleScope
 import com.example.dc_acconverterandcontrolremote.ui.theme.DC_ACConverterAndControlRemoteTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
 
-    val application = DatabaseApplication()
-    val database = application.databaseContainer.devicesRepository
+    // 1. Correct ViewModel Initialization
+    // This uses the Factory we built to safely get the Repo from the REAL Application instance
+    private val viewModel: DeviceSchedulerViewModel by viewModels {
+        DeviceSchedulerViewModel.Factory
+    }
 
-    val viewModel  = DeviceSchedulerViewModel(database , application)
-
-    val aware = WifiAware(applicationContext, viewModel)
+    // 2. Lateinit for WifiAware
+    // We must initialize this in onCreate after the ViewModel is ready
+    private lateinit var aware: WifiAware
 
     @RequiresPermission(Manifest.permission.ACCESS_WIFI_STATE)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
+
+        // 3. Initialize WifiAware using the system-provided applicationContext
+        aware = WifiAware(applicationContext, viewModel)
+
         enableEdgeToEdge()
         setContent {
-
             DC_ACConverterAndControlRemoteTheme {
-
+                // Pass the lifecycle-managed viewModel and aware instance
                 MainApp(LocalContext.current, viewModel, aware)
-
             }
         }
     }
@@ -49,21 +48,17 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
-        // these are pending to define
-        var macFilter: List<ByteArray> =
-            listOf(viewModel.setMacStringToAddress(viewModel.MAC_ADDRESS_REMOTE.toString()))
-        // these are pending to define pending define IPV6forphone
-        lateinit var serviceSpecificInfo: ByteArray
-
-        GlobalScope.launch {
+        // 4. Use lifecycleScope instead of GlobalScope
+        // lifecycleScope automatically cancels if the Activity is destroyed
+        lifecycleScope.launch {
             aware.startWiFiAwareandSubscribe()
         }
     }
 
     override fun onPause() {
         super.onPause()
-        GlobalScope.launch {
-                aware.closeSession()
+        lifecycleScope.launch {
+            aware.closeSession()
         }
     }
 }
