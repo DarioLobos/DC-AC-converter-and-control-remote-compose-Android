@@ -63,5 +63,9 @@
     <string name="checkConnection">Check connection</string>
     <string name="matchFilter">WIFI match filter</string>
     <string name="PeerPortSet">Peer port set</string>
+    <string name="restart">Please confirm to restart and update changes.</string>
+    <string name="restartTitle">Warning: Application will restart.</string>
+    <string name="save">Save &amp; restart </string>
+    <string name="dismiss">Dismiss</string>
 
 </resources>

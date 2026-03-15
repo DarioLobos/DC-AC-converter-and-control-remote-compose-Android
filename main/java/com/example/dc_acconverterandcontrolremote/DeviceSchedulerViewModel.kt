@@ -147,24 +147,19 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
          return runBlocking {allDevices.value}
     }
 
-    fun numberSetLaunch(numberDevicesText: String) {
+    // In your ViewModel
+    suspend fun numberSetLaunch(numberDevicesText: String) {
         val temp: Int = numberDevicesText.toIntOrNull() ?: default_nbr_devices
-        viewModelScope.launch {
-            context.myDataStore.edit { settings ->
-                settings[NUMBER_DEVICES] = temp
-            }
-            Toast.makeText(context, R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT).show()
+
+        // edit() is a suspend function; it waits until the save is complete
+        context.myDataStore.edit { settings ->
+            settings[NUMBER_DEVICES] = temp
         }
 
-        fun setMatchFilterLaunch(filter: String) {
-            viewModelScope.launch {
-                context.myDataStore.edit {
-
-                    it[MATCH_FILTER] = filter
-                }
-            }
-        }
+        // This toast will only show after the disk write is finished
+        Toast.makeText(context, R.string.toast_set_nbr_devices, Toast.LENGTH_SHORT).show()
     }
+
     fun setMatchFilterLaunch(matchFilter: String) {
         viewModelScope.launch {
 

@@ -48,6 +48,7 @@ enum class MenuList(
         SETTINGS(R.string.action_settings, Icons.Default.Settings, R.string.action_settings)
     }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @RequiresPermission(Manifest.permission.ACCESS_WIFI_STATE)
 @Composable
 fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAware){

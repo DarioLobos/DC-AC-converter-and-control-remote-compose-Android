@@ -28,6 +28,7 @@ import android.net.wifi.aware.WifiAwareSession
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
+import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.async
@@ -100,6 +101,23 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
             return;
         }
 
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.NEARBY_WIFI_DEVICES
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
         wifiAwareManager!!.attach(object : AttachCallback() {
             override fun onAttached(session: WifiAwareSession) {
                 super.onAttached(session)
@@ -120,7 +138,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
             override fun onIdentityChanged(mac: ByteArray) {
                 super.onIdentityChanged(mac)
                 // In this program mac address remote should be set only one time
-                viewModel.MacSetLaunchRemote(viewModel.setMacAddressToString(mac), context)
+                viewModel.MacSetLaunchRemote(viewModel.setMacAddressToString(mac))
                 println("New mac Address had been set ")
             }
         }, null);
@@ -172,7 +190,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                         context
                     )
 
-                    viewModel.peerPortSetLaunch(peerAwareInfo.getPort(), context)
+                    viewModel.peerPortSetLaunch(peerAwareInfo.getPort())
 
                     val tempPort: String = viewModel.PEER_PORT.toString()
 
@@ -241,7 +259,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun discover(): Intent? {
         if (viewModel.MATCH_FILTER.toString().length<7){
-        viewModel.setMatchFilterLaunch(byteArrayOf(1,2,3,4,5,6,))}
+        viewModel.setMatchFilterLaunch("1234567\n")}
 
         if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
 
@@ -305,6 +323,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
         }
     }
 
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
     @RequiresApi(Build.VERSION_CODES.O)
     fun subscribe() {
 
@@ -365,15 +384,11 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                         } else if (message.size == 6) {
 
                             viewModel.MacSetLaunchRemote(
-                                viewModel.setMacAddressToString(message),
-                                context
-                            )
+                                viewModel.setMacAddressToString(message))
 
                         } else if (message.size == 16) {;
                             viewModel.IpSetLaunchRemote(
-                                viewModel.setIpAddressToString(message),
-                                context
-                            )
+                                viewModel.setIpAddressToString(message))
 
     // this program will not use other message after this will use socket
     //                    } else if (message.size > 16) {
@@ -428,6 +443,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
 
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     suspend fun startWiFiAwareandSubscribe(){
         coroutineScope {
             discover()

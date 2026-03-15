@@ -33,13 +33,13 @@ fun TimePickerDialog(
     confirmButton: @Composable () -> Unit,
     dismissButton: @Composable () -> Unit,
     content: @Composable () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        confirmButton = confirmButton,
-        dismissButton = dismissButton,
-        text = { content() }
-    )
+) {   AlertDialog(
+    onDismissRequest = onDismissRequest,
+    confirmButton = confirmButton,
+    dismissButton = dismissButton,
+    text = { content() }
+)
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -275,3 +275,4 @@ fun DeviceScheduler_Screen( context: Context,
         }
     }
 }
+

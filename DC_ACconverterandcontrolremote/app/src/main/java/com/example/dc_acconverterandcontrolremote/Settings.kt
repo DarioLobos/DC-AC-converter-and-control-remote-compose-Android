@@ -1,12 +1,18 @@
 package com.example.dc_acconverterandcontrolremote
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +26,23 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+
+fun restartApp(context: Context) {
+    val packageManager = context.packageManager
+    val intent = packageManager.getLaunchIntentForPackage(context.packageName)
+    val componentName = intent?.component
+
+    // Create a new task and clear everything else
+    val restartIntent = Intent.makeRestartActivityTask(componentName)
+    context.startActivity(restartIntent)
+
+    // Kill the current process to ensure a clean start
+    Runtime.getRuntime().exit(0)
+}
 
 @Composable
 fun TextToAddressError (addressText: String, isError: Boolean ) {
@@ -38,7 +61,17 @@ fun TextToDeviceError (deviceText: String, isError: Boolean) {
 }
 
 @Composable
-fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
+fun TextToMatchFilterError (deviceText: String, isError: Boolean) {
+    if (isError) {
+        if (deviceText.isEmpty()) Text(stringResource(R.string.required))
+        else Text(stringResource(R.string.more3))
+    }
+}
+
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context, aware: WifiAware){
 
     var ipAddressText by remember { mutableStateOf(  model.IP_ADDRESS_REMOTE.toString())}
     var macAddressText by remember { mutableStateOf( model.MAC_ADDRESS_REMOTE.toString())}
@@ -52,8 +85,36 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
     val isErrorIp: Boolean =  ( ipAddressText.length!=12) or ( ipAddressText.isEmpty())
     val isErrorDev: Boolean = ((numberDevicesText.toIntOrNull() ?: 0) > 100) || (numberDevicesText.isEmpty())
     val isErrorMat: Boolean =  ( matchFilterText.length!=7) or ( matchFilterText.isEmpty())
+    var openDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Box(propagateMinConstraints = false) {
+
+        if(openDialog){
+            AlertDialog(
+                onDismissRequest = {openDialog=false},
+                confirmButton = {
+                    TextButton(onClick = {
+                        scope.launch {
+                            // 1. Wait for the database/datastore save to finish
+                            model.numberSetLaunch(numberDevicesText)
+
+                            // 2. Only now, restart the app
+                            restartApp(context)
+                        }
+                    }
+                    ) {Text(stringResource(R.string.save)) }
+                } ,
+                dismissButton = {TextButton(onClick = {
+                    openDialog=false
+                }
+                ) {Text(stringResource(R.string.cancel)) }
+                } ,
+                title ={ Text(stringResource(R.string.restartTitle)) } ,
+                text = { Text(stringResource(R.string.restart)) }
+            )
+
+        }
         Column(
             modifier = Modifier
                 .wrapContentSize(),
@@ -191,12 +252,39 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
 
                 OutlinedTextField(
                     modifier = Modifier.onFocusChanged { focusState ->
-                        if (!focusState.isFocused && isBlurredMat) {
+                        if (!focusState.isFocused && isBlurredMat && !isErrorMat) {
+                            // 1. Trigger the background save to storage
                             model.setMatchFilterLaunch(matchFilterText)
+
+                            scope.launch {
+                                try {
+                                    // 2. VERIFICATION: Wait up to 1 second for Storage to match UI Text
+                                    // This replaces 'while' loops and ensures data integrity
+                                    withTimeout(1000L) {
+                                        model.discoverySettings.first { settings ->
+                                            // Only proceed if what is in Storage == what the user typed
+                                            settings.matchFilter == matchFilterText && settings.isReady
+                                        }
+                                    }
+
+                                    // 3. ACTION: Restart hardware only after data is confirmed
+                                    aware.closeSession()
+                                    delay(300) // Necessary hardware "cooling" period
+                                    aware.startWiFiAwareandSubscribe()
+
+                                } catch (e: TimeoutCancellationException) {
+                                    // Handle failure: Storage didn't update in time
+                                    Toast.makeText(context, "Storage sync failed. Try again.", Toast.LENGTH_SHORT).show()
+                                } catch (e: Exception) {
+                                    println("Aware Restart failed")
+                                }
+                            }
                             isBlurredMat = false
-                        }},
+                        }
+                    },
                     value = matchFilterText,
                     isError = isErrorMat,
+                    supportingText = {TextToMatchFilterError(matchFilterText, isErrorMat)},
                     onValueChange = { newText: String ->
                         if (newText.all { it.isDigit()} and (newText.length<8)) {
                             matchFilterText = newText
@@ -214,9 +302,13 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
             OutlinedTextField(
                 modifier = Modifier.onFocusChanged { focusState ->
                     if (!focusState.isFocused && isBlurredDev) {
-                        model.numberSetLaunch(numberDevicesText)
-                        isBlurredIp = false
-                    }},
+                        // Only show the dialog if the text is different from the original model value
+                        if (numberDevicesText != model.NUMBER_DEVICES.toString()) {
+                            openDialog = true
+                        }
+                        isBlurredDev = false
+                    }
+                },
                 value = numberDevicesText,
                 onValueChange = { newText ->
                     if (newText.isEmpty()) {
@@ -228,10 +320,13 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
                         if (numericValue != null) {
                             // 3. Only update if it's within your range (0-100)
                             if (numericValue <= 100) {
+
                                 numberDevicesText = newText
+
                             }
                         }
                     }
+
                     // 4. Mark that the field has changed to trigger the save later
                     if (!isBlurredDev) isBlurredDev = true
                 }
@@ -246,6 +341,6 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context){
 
         }
     }
-        }
+    }
 
 }
