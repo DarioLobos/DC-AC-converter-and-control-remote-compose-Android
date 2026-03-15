@@ -29,8 +29,10 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.io.DataOutputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -44,9 +46,38 @@ import kotlin.ByteArray
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+
+const val HANDSHAKE_OK = 0XFF
+const val  HANDSHAKE_FAILED= 0X00
+
+//macro to identify received data for scheduler devices
+const val  RECEIVED_SCHEDULER= 1
+
+//macro to identify data for run control remote
+const val RECEIVED_C_REMOTE = 2
+
+//macro to define data for setup time
+const val RECEIVED_TIME = 4
+
+//macro to define data for schedule charger time
+const val RECEIVED_CHARGER_TIME= 8
+
+//macro to identify request present esp32 configuration feed back
+const val RECEIVED_REPORT_REQ= 16
+
+//macro to define new matchfilter
+const val RECEIVED_MATCH_FILTER= 32
+
+//macro to define quantity of devices
+const val RECEIVED_QUANTITY_DEVICES= 64
+
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
+
 
     private val MAC_ADDRESS_MESSAGE: Int = 55
     private val IP_ADDRESS_MESSAGE = 33
@@ -83,11 +114,14 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
     private val wifiMutex = Mutex()
 
+    var currentNetwork: Network? = null
+
     @RequiresApi(Build.VERSION_CODES.O)
     @RequiresPermission(Manifest.permission.ACCESS_WIFI_STATE)
-    fun attachToWifi() {
+    fun attachToWifi(deferred: CompletableDeferred<Boolean>? = null) {
 
         if (wifiAwareSession != null) {
+            deferred?.complete(true) // Already attached
             return
         }
 
@@ -118,7 +152,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                 super.onAttached(session)
                 wifiAwareSession = session;
                 println("wifi session successful")
-
+                deferred?.complete(true)
             }
 
             override fun onAttachFailed() {
@@ -126,6 +160,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                 wifiAwareSession!!.close()
                 wifiAwareSession = null
                 println("Aware session failed")
+                deferred?.complete(false)
             }
 
         }, object : IdentityChangedListener() {
@@ -158,6 +193,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
                 override fun onAvailable(network: Network) {
                     super.onAvailable(network);
+                    currentNetwork = network
                 }
 
                 override fun onLosing(network: Network, maxMsToLive: Int) {
@@ -411,58 +447,80 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
             }
         }
 
-    suspend fun sendData(data: ByteArray, dataType: Int) {
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    suspend fun sendData(macro: Int, data: ByteArray): Boolean = withContext(Dispatchers.IO) {
+        // 1. Check if the network tunnel is ready
+        val targetNetwork = currentNetwork ?: run {
+            println("Error: currentNetwork is null. Tunnel not established yet.")
+            return@withContext false
+        }
 
-            if (socket == null) {
-
-                val tempPort: String = viewModel.PEER_PORT.toString()
-
-                val ipv6Temp: Inet6Address =
-                    Inet6Address.getByAddress(viewModel.setIpStringToAddress(viewModel.getIpAddressRemoteLaunch()!!)) as Inet6Address
-
-                socket = Socket(ipv6Temp, tempPort.toInt())
-
-            }
-
-        val arrayAndType = ByteArray(data.size + 1)
-        arrayAndType[0] = dataType.toByte()
-        System.arraycopy(data, 0, arrayAndType, 1, data.size)
+        // Declare outside lock so finally block can see it
+        var tempSocket: Socket? = null
 
         wifiMutex.withLock {
-            withContext(Dispatchers.IO) {
-                flagReceived=false
-                            try {
-                                val inputStream: InputStream=  socket!!.getInputStream()
-                                val outputStream: OutputStream = socket!!.getOutputStream()
-                                val dataOutputStream: DataOutputStream =
-                                    DataOutputStream(outputStream)
-                                dataOutputStream.write(arrayAndType, 0, arrayAndType.size)
-                                dataOutputStream.write(0xff)
-                                val result= inputStream.read()
-                                if (result != -1) {
-                                    flagReceived = true
-                                }
-                                dataOutputStream.close()
-                                inputStream.close()
-                                }
-                             catch (e: Exception) {
-                                println("data could not be sent in dataOutputStream")
-                            }
-                        }
-                    }
+            try {
+                // 2. Get connection details from ViewModel
+                val port = viewModel.getPeerPortLaunch() ?: return@withContext false
+                val ipv6String = viewModel.getIpAddressRemoteLaunch() ?: return@withContext false
+                val address = Inet6Address.getByName(ipv6String)
+
+                // 3. Create socket bound to the Aware Network
+                tempSocket = targetNetwork.socketFactory.createSocket(address, port)
+
+                // 4. Set explicit parameters to avoid compiler inference errors
+                tempSocket?.soTimeout = 5000   // 5 second wait for ESP32 handshake
+                tempSocket?.tcpNoDelay = true // Send immediately
+
+                // 5. Send Macro and Data
+                val output = DataOutputStream(tempSocket!!.getOutputStream())
+                output.writeByte(macro)
+                output.write(data)
+                output.flush()
+
+                // 6. THE CHECK: Read handshake from ESP32
+                val inputStream = tempSocket!!.getInputStream()
+                val response = inputStream.read() // Waits for ESP32 response
+
+                // Returns true only if ESP32 sends HANDSHAKE_OK (0xFF)
+                return@withContext response == HANDSHAKE_OK
+
+            } catch (e: Exception) {
+                println("Socket Error: ${e.message}")
+                return@withContext false
+            } finally {
+                // 7. Cleanup: Always close the socket
+                try { tempSocket?.close() } catch (e: Exception) { }
             }
+        }
+    }
 
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    suspend fun startWiFiAwareandSubscribe(){
+    // Inside your WifiAware class
+    suspend fun startWiFiAwareandSubscribe() {
         coroutineScope {
+            // 1. Regular call
             discover()
-            attachToWifi()
-            subscribe()
+
+            // 2. Create the "Signal" object
+            val attachedSignal = CompletableDeferred<Boolean>()
+
+            // 3. Pass the signal to your function
+            attachToWifi(attachedSignal)
+
+            // 4. WAIT here until the hardware responds (onAttached or onAttachFailed)
+            val success = attachedSignal.await()
+
+            if (success) {
+                // 5. Now it is safe to call subscribe because wifiAwareSession is NOT null
+                subscribe()
+            } else {
+                println("Could not attach to hardware")
             }
         }
-
+    }
 
 
     suspend fun closeSession() {
@@ -476,6 +534,21 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                 flagReceived = false
             }
         }
+
+suspend fun sendSchedulerToEsp32(viewModel: DeviceSchedulerViewModel) {
+
+
+     val listDevices = viewModel.devicesList()
+     val arrayData: ByteArray= ByteArray(listDevices.size * 5)
+
+    for (i in 0 until  listDevices.size){
+        arrayData[i*5] = listDevices[i].device_number!!.toByte()
+        arrayData[i*5+1] = listDevices[i].hour_on!!.toByte()
+        arrayData[i*5+2] = listDevices[i].minutes_on!!.toByte()
+        arrayData[i*5+3] = listDevices[i].hour_off!!.toByte()
+        arrayData[i*5+3] = listDevices[i].minutes_off!!.toByte()
+    }
+        sendData( RECEIVED_SCHEDULER, arrayData)
+
 }
-
-
+}
