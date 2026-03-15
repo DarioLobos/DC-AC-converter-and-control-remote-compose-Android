@@ -28,6 +28,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 
+
+data class DiscoverySettings(
+    val matchFilter: String = "",
+    val isReady: Boolean = false
+)
 // 1. Move this OUTSIDE and ABOVE the class
 // It is private to this FILE, so only this ViewModel can see it.
 private val Context.myDataStore by preferencesDataStore(name = "settings")
@@ -143,6 +148,24 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    // 1. Combine DataStore filter and Database status
+    val discoverySettings: StateFlow<DiscoverySettings> = kotlinx.coroutines.flow.combine(
+        match_filter,
+        allDevices
+    ) { filter, devices ->
+        DiscoverySettings(
+            matchFilter = filter,
+            // System is ready if filter is 7 digits AND database has loaded devices
+            // (Adjust devices.isNotEmpty() based on your app's "ready" definition)
+            isReady = filter.trim().length == 7 && devices.isNotEmpty()
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = DiscoverySettings()
+    )
+
     fun devicesList():List<Devices>{
          return runBlocking {allDevices.value}
     }

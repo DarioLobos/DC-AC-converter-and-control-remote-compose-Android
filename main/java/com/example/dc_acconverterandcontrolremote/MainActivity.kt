@@ -11,6 +11,8 @@ import androidx.annotation.RequiresPermission
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import com.example.dc_acconverterandcontrolremote.ui.theme.DC_ACConverterAndControlRemoteTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 
@@ -47,16 +49,29 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onResume() {
         super.onResume()
-
-        // 4. Use lifecycleScope instead of GlobalScope
-        // lifecycleScope automatically cancels if the Activity is destroyed
         lifecycleScope.launch {
-            aware.startWiFiAwareandSubscribe()
+            // 2. Observe your discoverySettings (Match Filter + DB Status)
+            viewModel.discoverySettings.collectLatest { settings ->
+
+                // 3. WAIT: Only start if storage/DB are verified 'Ready'
+                if (settings.isReady) {
+                    // If a session already exists (e.g., from a settings change), close it first
+                    if (aware.wifiAwareSession != null) {
+                        aware.closeSession()
+                        delay(250)
+                    }
+
+                    // 4. Start only with verified data
+                    aware.startWiFiAwareandSubscribe()
+                }
+            }
         }
     }
 
     override fun onPause() {
         super.onPause()
+        // The lifecycleScope will cancel the 'collectLatest' above automatically,
+        // but we still manually close the hardware session to be safe.
         lifecycleScope.launch {
             aware.closeSession()
         }

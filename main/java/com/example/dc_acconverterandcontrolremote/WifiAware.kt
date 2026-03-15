@@ -30,11 +30,7 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import java.io.DataOutputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -82,7 +78,6 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
     var matchFilter: List<ByteArray> = listOf(viewModel.getMatchFilterLaunch())
 
-    lateinit var  clientThread: Thread
 
     var flagReceived: Boolean=false
 
@@ -102,10 +97,10 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
         }
 
         if (ActivityCompat.checkSelfPermission(
-                this,
+                context,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
-                this,
+                context,
                 Manifest.permission.NEARBY_WIFI_DEVICES
             ) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -210,17 +205,17 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                     // this program only use one Thread, valid for other usages
                     try {
 
-                        var awareNi: NetworkInterface = NetworkInterface.getByName(
+                        val awareNi: NetworkInterface = NetworkInterface.getByName(
                             linkProperties.getInterfaceName()
                         )
 
-                        var Addresses: Enumeration<InetAddress> = awareNi.getInetAddresses();
+                        val Addresses: Enumeration<InetAddress> = awareNi.getInetAddresses();
 
                         while (Addresses.hasMoreElements()) {
                             var addr: InetAddress = Addresses.nextElement();
                             if (addr is Inet6Address) {
 
-                                if ((addr as Inet6Address).isLinkLocalAddress()) {
+                                if (addr.isLinkLocalAddress()) {
 
                                     viewModel.IpSetLaunchLocal(
                                         viewModel.setIpAddressToString(
@@ -324,7 +319,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
     }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun subscribe() {
 
 
@@ -337,8 +332,24 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
         if ((wifiAwareManager!!.isDeviceAttached) and (subscribeDiscoverySession == null)) {
 
 
-
-             wifiAwareSession!!.subscribe(subscribeConfig!!, object : DiscoverySessionCallback() {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.NEARBY_WIFI_DEVICES
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return
+            }
+            wifiAwareSession!!.subscribe(subscribeConfig!!, object : DiscoverySessionCallback() {
 
                     override fun onServiceDiscovered(
                         peerHandle: PeerHandle,
@@ -442,7 +453,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
             }
 
 
-
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     suspend fun startWiFiAwareandSubscribe(){
         coroutineScope {
