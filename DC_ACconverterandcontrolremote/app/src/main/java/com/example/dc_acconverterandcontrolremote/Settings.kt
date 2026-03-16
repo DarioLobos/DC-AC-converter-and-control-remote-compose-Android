@@ -1,6 +1,8 @@
 package com.example.dc_acconverterandcontrolremote
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -28,6 +30,7 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
@@ -271,6 +274,16 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context, aware: Wi
                                     // 3. ACTION: Restart hardware only after data is confirmed
                                     aware.closeSession()
                                     delay(300) // Necessary hardware "cooling" period
+                                    if (ActivityCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.ACCESS_FINE_LOCATION
+                                        ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.NEARBY_WIFI_DEVICES
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        Toast.makeText(context, "WIFI permission failed. Try again.", Toast.LENGTH_SHORT).show()
+                                    }
                                     aware.startWiFiAwareandSubscribe()
 
                                 } catch (e: TimeoutCancellationException) {

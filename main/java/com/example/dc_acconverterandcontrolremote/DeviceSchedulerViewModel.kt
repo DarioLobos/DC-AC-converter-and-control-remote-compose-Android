@@ -340,10 +340,29 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
             if (on_or_off) byteArrayOf((device_number * 2).toByte()) else byteArrayOf((device_number * 2 + 1).toByte())
 
         viewModelScope.launch(Dispatchers.IO) {
-            aware.sendData(byteArray, control_remote)
+            aware.sendData(control_remote,byteArray, )
         }
     }
 
+    fun sendSchedulerToWiFI( aware: WifiAware) {
+         val  RECEIVED_SCHEDULER= 1
+        val devices: List<Devices> = devicesList()
+        val byteArray: ByteArray = ByteArray((numberDevices.value*5))
+
+        for (i in  0 until numberDevices.value){
+
+            byteArray[0+i*5]= devices[i].device_number!!.toByte()
+            byteArray[1+i*5]= (devices[i].hour_on?:200).toByte()
+            byteArray[2+i*5]= (devices[i].minutes_on?:200).toByte()
+            byteArray[3+i*5]= (devices[i].hour_off?:200).toByte()
+            byteArray[4+i*5]= (devices[i].minutes_off?:200).toByte()
+        }
+
+
+        viewModelScope.launch(Dispatchers.IO) {
+            aware.sendData(RECEIVED_SCHEDULER,byteArray, )
+        }
+    }
 
 
     fun deviceName(devicenbr: Int): String {
@@ -467,8 +486,7 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
 
     fun setPortToUse(message: ByteArray): Int {
 
-        val portToUse: Int =
-            ((message[1].toInt().and(0xFF)).shl(8)) or (message[0].toInt().and(0xFF))
+        val portToUse: Int = ((message[1].toInt().and(0xFF)).shl(8)) or (message[0].toInt().and(0xFF))
             //PENDING
 
             return portToUse

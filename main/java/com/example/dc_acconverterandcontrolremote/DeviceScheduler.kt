@@ -24,9 +24,12 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.unit.sp
 import java.util.Calendar
 import kotlin.Int
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
+
 @Composable
 fun TimePickerDialog(
     onDismissRequest: () -> Unit,
@@ -240,9 +243,10 @@ fun DeviceControlCard( context: Context, device_number: Int, deviceName: String,
 
 @Composable
 fun DeviceScheduler_Screen( context: Context,
-                            viewModel : DeviceSchedulerViewModel ) {
+                            viewModel : DeviceSchedulerViewModel, aware: WifiAware ) {
     // 1. Monitor the signal
     val isReady by viewModel.isInitialized.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
     // 2. Capture the SNAPSHOT once initialization is finished
     val devices = remember(isReady) {
@@ -261,18 +265,39 @@ fun DeviceScheduler_Screen( context: Context,
     } else {
         // Now it's safe to use devices.size and devices[index]
         // because they won't change until the next app restart.
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2), Modifier
-                .wrapContentSize()
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+        Column(
+            modifier = Modifier
+                .wrapContentSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            items(devices.size) {
-                DeviceControlCard( context,it,devices[it].device_name!!, viewModel)
+            val text = stringResource(R.string.sendSchedulers)
 
+            ElevatedButton(
+                onClick = {
+                    viewModel.sendSchedulerToWiFI(aware)
+                          },
+                modifier = Modifier.wrapContentSize(),
+                shape = MaterialTheme.shapes.extraLarge
+            ) {
+                Text(text, fontSize = 20.sp)
+            }
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2), Modifier
+                    .wrapContentSize()
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                contentPadding = PaddingValues(
+                    bottom = 100.dp // High enough gap for your Floating Button
+                )
+            ) {
+                items(devices.size) {
+                    DeviceControlCard(context, it, devices[it].device_name!!, viewModel)
+
+                }
             }
         }
     }
-}
 
+}

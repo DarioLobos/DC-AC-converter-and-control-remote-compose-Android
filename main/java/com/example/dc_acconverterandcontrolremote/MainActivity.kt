@@ -1,7 +1,9 @@
 package com.example.dc_acconverterandcontrolremote
 import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,6 +11,7 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.dc_acconverterandcontrolremote.ui.theme.DC_ACConverterAndControlRemoteTheme
 import kotlinx.coroutines.delay
@@ -62,6 +65,16 @@ class MainActivity : ComponentActivity() {
                     }
 
                     // 4. Start only with verified data
+                    if (ActivityCompat.checkSelfPermission(
+                            applicationContext,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                            applicationContext,
+                            Manifest.permission.NEARBY_WIFI_DEVICES
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        Toast.makeText(applicationContext, "WIFI permission failed. Try again.", Toast.LENGTH_SHORT).show()
+                    }
                     aware.startWiFiAwareandSubscribe()
                 }
             }

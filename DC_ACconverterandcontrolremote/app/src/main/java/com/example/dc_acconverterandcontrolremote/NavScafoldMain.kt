@@ -2,7 +2,9 @@ package com.example.dc_acconverterandcontrolremote
 import com.example.dc_acconverterandcontrolremote.R
 import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.compose.material3.Icon
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.launch
 
 
@@ -80,8 +83,8 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAw
                 MenuList.HOME -> MainScreen(localContext, viewModel, aware)
                 MenuList.VOLTAGES -> Voltage_Screen()
                 MenuList.CHARGERSCHEDULER -> ChargerScheduler_Screen()
-                MenuList.DEVICESSCHEDULER -> DeviceScheduler_Screen( context, viewModel)
-                MenuList.SETTINGS -> Settings_Screen(viewModel, localContext)
+                MenuList.DEVICESSCHEDULER -> DeviceScheduler_Screen( context, viewModel, aware)
+                MenuList.SETTINGS -> Settings_Screen(viewModel, localContext, aware)
             }
 
             // 3. The FAB with correct modifier syntax
@@ -92,6 +95,17 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAw
                     .padding(16.dp),
                 onClick = {
                     scope.launch {
+                        if (ActivityCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.NEARBY_WIFI_DEVICES
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                           println("aware permission error")
+                            Toast.makeText(context, "WIFI permission failed. Try again.", Toast.LENGTH_SHORT).show()
+                        }
                         aware.startWiFiAwareandSubscribe()
                     }
                 }

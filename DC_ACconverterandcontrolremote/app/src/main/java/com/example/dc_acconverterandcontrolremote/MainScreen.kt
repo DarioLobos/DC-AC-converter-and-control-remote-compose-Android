@@ -128,8 +128,11 @@ fun MainScreen(context: Context, model: DeviceSchedulerViewModel, aware: WifiAwa
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(
+                bottom = 100.dp // High enough gap for your Floating Button
+            )
+        ){
             items(devices.size) { index ->
                 // Make sure this name matches your defined function below
                 DeviceControlCard(

@@ -26,6 +26,7 @@ import android.net.wifi.aware.WifiAwareNetworkInfo
 import android.net.wifi.aware.WifiAwareNetworkSpecifier
 import android.net.wifi.aware.WifiAwareSession
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
@@ -138,14 +139,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                 Manifest.permission.NEARBY_WIFI_DEVICES
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
+
         }
         wifiAwareManager!!.attach(object : AttachCallback() {
             override fun onAttached(session: WifiAwareSession) {
@@ -174,8 +168,6 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
         }, null);
     }
 
-    // network request is done by te publisher and this program will work as suscriber
-    // so only must send a message to esp32 start network
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun requestWifiNetwork() {
         if (networkSpecifier == null) {
@@ -208,28 +200,19 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                     super.onUnavailable()
                 }
 
-                override fun onCapabilitiesChanged(
-                    network: Network,
-                    networkCapabilities: NetworkCapabilities
-                ) {
+                override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
                     super.onCapabilitiesChanged(network, networkCapabilities)
-                    val peerAwareInfo: WifiAwareNetworkInfo =
-                        networkCapabilities.getTransportInfo() as WifiAwareNetworkInfo
 
-                    viewModel.IpSetLaunchLocal(
-                        viewModel.setIpAddressToString(peerAwareInfo.getPeerIpv6Addr()!!.address),
-                        context
-                    )
+                    // 1. Get the transport info specifically as WifiAwareNetworkInfo
+                    val peerAwareInfo = networkCapabilities.transportInfo as? WifiAwareNetworkInfo ?: return
 
-                    viewModel.peerPortSetLaunch(peerAwareInfo.getPort())
+                    // 2. Capture the port assigned by the ESP32 (which should be 8080)
+                    val discoveredPort = peerAwareInfo.port
 
-                    val tempPort: String = viewModel.PEER_PORT.toString()
+                    // 3. Update your ViewModel so sendData() knows to use 8080
+                    viewModel.peerPortSetLaunch(discoveredPort)
 
-                    val ipv6Temp: Inet6Address =
-                        Inet6Address.getByAddress(viewModel.setIpStringToAddress(viewModel.IP_ADDRESS_REMOTE.toString())) as Inet6Address
-
-                    // socket = Socket(ipv6Temp, tempPort.toInt())
-                    socket = network.getSocketFactory().createSocket(ipv6Temp, tempPort.toInt())
+                    println("Verified: Connecting to ESP32 on Port $discoveredPort")
                 }
 
                 override fun onLinkPropertiesChanged(
@@ -277,8 +260,10 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                             }
                         }
                     } catch (e: SocketException) {
+                        Toast.makeText(context, "onlinkpropertychanged error socket $e", Toast.LENGTH_SHORT).show()
                         println("onlinkpropertychanged error socket $e")
                     } catch (e: Exception) {
+                        Toast.makeText(context, "onlinkpropertychanged error socket $e", Toast.LENGTH_SHORT).show()
                         println("onlinkpropertychanged error socket $e")
                     }
                 }
@@ -387,37 +372,42 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
             }
             wifiAwareSession!!.subscribe(subscribeConfig!!, object : DiscoverySessionCallback() {
 
-                    override fun onServiceDiscovered(
-                        peerHandle: PeerHandle,
-                        serviceSpecificInfo: ByteArray,
-                        matchFilter: List<ByteArray>
-                 ) {
-                      this@WifiAware.peerHandle = peerHandle
+                override fun onServiceDiscovered(
+                    peerHandle: PeerHandle,
+                    serviceSpecificInfo: ByteArray,
+                    matchFilter: List<ByteArray>
+                ) {
+                    // 1. Mandatory super call
+                    super.onServiceDiscovered(peerHandle, serviceSpecificInfo, matchFilter)
 
-                      super.onServiceDiscovered(peerHandle, serviceSpecificInfo, matchFilter)
+                    // 2. Store the peerHandle for future communication
+                    this@WifiAware.peerHandle = peerHandle
 
+                    // 3. Build the Network Specifier for the Subscriber (Initiator)
+                    // We use the discovery session and the peerHandle we just received
+                    networkSpecifier = WifiAwareNetworkSpecifier.Builder(
+                        subscribeDiscoverySession ?: return,
+                        peerHandle
+                    ).build()
 
-                        if (subscribeDiscoverySession != null) {
-                            subscribeDiscoverySession!!.sendMessage(
-                                peerHandle, MAC_ADDRESS_MESSAGE,
-                                viewModel.setMacStringToAddress(viewModel.getMacAddressLocalLaunch()!!)
-                            )
-                            println("onServiceDiscovered sending mac...")
-                        }
+                    // 4. NOW trigger the network tunnel creation
+                    requestWifiNetwork()
 
+                    // 5. Your existing logic to send the MAC address
+                    if (subscribeDiscoverySession != null) {
+                        subscribeDiscoverySession!!.sendMessage(
+                            peerHandle, MAC_ADDRESS_MESSAGE,
+                            viewModel.setMacStringToAddress(viewModel.getMacAddressLocalLaunch()!!)
+                        )
+                        println("onServiceDiscovered: Peer found, super called, requesting network...")
                     }
-
+                }
 
                     override fun onSubscribeStarted(session: SubscribeDiscoverySession) {
                         super.onSubscribeStarted(session);
 
                         subscribeDiscoverySession = session;
 
-                        subscribeDiscoverySession!!.sendMessage(
-                            peerHandle!!, MAC_ADDRESS_MESSAGE,
-                            viewModel.setMacStringToAddress(viewModel.getMacAddressLocalLaunch()!!)
-                        )
-                        println("onServiceStarted sending mac...")
 
                     }
 
@@ -476,6 +466,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                 val output = DataOutputStream(tempSocket!!.getOutputStream())
                 output.writeByte(macro)
                 output.write(data)
+                output.writeByte(HANDSHAKE_OK)
                 output.flush()
 
                 // 6. THE CHECK: Read handshake from ESP32
@@ -523,17 +514,28 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
     }
 
 
-    suspend fun closeSession() {
-            wifiMutex.withLock {
-                withContext(Dispatchers.IO) {
-                    socket?.close()
-                    socket = null
-                }
-                wifiAwareSession?.close()
-                wifiAwareSession = null
-                flagReceived = false
-            }
+    fun closeSession() {
+        try {
+            // 1. Close the active Socket to stop any pending transmissions
+            socket?.close()
+            socket = null
+
+            // 2. Clear the Network object to prevent sendData() from running
+            currentNetwork = null
+
+            // 3. Explicitly close discovery and main Aware sessions
+            subscribeDiscoverySession?.close()
+            subscribeDiscoverySession = null
+
+            wifiAwareSession?.close()
+            wifiAwareSession = null
+
+
+            println("Wi-Fi Aware session and UI state fully reset.")
+        } catch (e: Exception) {
+            println("Error during closeSession cleanup: ${e.message}")
         }
+    }
 
 suspend fun sendSchedulerToEsp32(viewModel: DeviceSchedulerViewModel) {
 
