@@ -127,6 +127,9 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
         }
 
         if (wifiAwareManager == null || !wifiAwareManager!!.isAvailable()) {
+
+            Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
+
             println("wifi unavailable")
             return;
         }
@@ -154,6 +157,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                 wifiAwareSession!!.close()
                 wifiAwareSession = null
                 println("Aware session failed")
+                Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
                 deferred?.complete(false)
             }
 
@@ -190,14 +194,20 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
                 override fun onLosing(network: Network, maxMsToLive: Int) {
                     super.onLosing(network, maxMsToLive)
+                    Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
+
                 }
 
                 override fun onLost(network: Network) {
                     super.onLost(network)
+                    Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
+
                 }
 
                 override fun onUnavailable() {
                     super.onUnavailable()
+                    Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
+
                 }
 
                 override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
@@ -260,10 +270,11 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                             }
                         }
                     } catch (e: SocketException) {
-                        Toast.makeText(context, "onlinkpropertychanged error socket $e", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
                         println("onlinkpropertychanged error socket $e")
                     } catch (e: Exception) {
-                        Toast.makeText(context, "onlinkpropertychanged error socket $e", Toast.LENGTH_SHORT).show()
+
+                        Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
                         println("onlinkpropertychanged error socket $e")
                     }
                 }
@@ -289,7 +300,10 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
             return context.registerReceiver(myReceiver, filter)
 
-        } else return null
+        } else{
+            Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
+            return null
+        }
 
 
     }
@@ -361,14 +375,8 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                     Manifest.permission.NEARBY_WIFI_DEVICES
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return
+                Toast.makeText(context, R.string.permissionError, Toast.LENGTH_SHORT).show()
+
             }
             wifiAwareSession!!.subscribe(subscribeConfig!!, object : DiscoverySessionCallback() {
 
@@ -442,6 +450,9 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
         // 1. Check if the network tunnel is ready
         val targetNetwork = currentNetwork ?: run {
             println("Error: currentNetwork is null. Tunnel not established yet.")
+
+            Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
+
             return@withContext false
         }
 
@@ -481,11 +492,69 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                 return@withContext false
             } finally {
                 // 7. Cleanup: Always close the socket
-                try { tempSocket?.close() } catch (e: Exception) { }
+                try { tempSocket?.close() } catch (e: Exception) {
+
+                    println("Error: Closing socket.")
+
+                    Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
+
+                }
             }
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    suspend fun sendDataWithReturnData(macro: Int):ByteArray? {
+        // 1. Check if the network tunnel is ready
+        val targetNetwork = currentNetwork ?: run {
+            println("Error: currentNetwork is null. Tunnel not established yet.")
+            Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
+
+            return null
+        }
+
+        // Declare outside lock so finally block can see it
+        var tempSocket: Socket? = null
+
+        wifiMutex.withLock {
+            try {
+                // 2. Get connection details from ViewModel
+                val port = viewModel.getPeerPortLaunch() ?: return null
+                val ipv6String = viewModel.getIpAddressRemoteLaunch() ?: return null
+                val address = Inet6Address.getByName(ipv6String)
+
+                // 3. Create socket bound to the Aware Network
+                tempSocket = targetNetwork.socketFactory.createSocket(address, port)
+
+                // 4. Set explicit parameters to avoid compiler inference errors
+                tempSocket?.soTimeout = 5000   // 5 second wait for ESP32 handshake
+                tempSocket?.tcpNoDelay = true // Send immediately
+
+                // 5. Send Macro and Data
+                val output = DataOutputStream(tempSocket!!.getOutputStream())
+                output.writeByte(macro)
+
+                // 6. Await for receive the data
+
+                val inputStream = tempSocket!!.getInputStream()
+                val response = inputStream.readAllBytes()
+                output.flush()
+
+
+                // Returns
+                return response
+
+            } catch (e: Exception) {
+                println("Socket Error: ${e.message}")
+                Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
+
+                return null
+            } finally {
+                // 7. Cleanup: Always close the socket
+                try { tempSocket?.close() } catch (e: Exception) { }
+            }
+        }
+    }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.NEARBY_WIFI_DEVICES])
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -508,6 +577,8 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
                 // 5. Now it is safe to call subscribe because wifiAwareSession is NOT null
                 subscribe()
             } else {
+
+                Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
                 println("Could not attach to hardware")
             }
         }
@@ -533,6 +604,7 @@ class WifiAware(val context: Context, val viewModel: DeviceSchedulerViewModel) {
 
             println("Wi-Fi Aware session and UI state fully reset.")
         } catch (e: Exception) {
+            Toast.makeText(context, R.string.connectionError, Toast.LENGTH_SHORT).show()
             println("Error during closeSession cleanup: ${e.message}")
         }
     }
@@ -548,9 +620,31 @@ suspend fun sendSchedulerToEsp32(viewModel: DeviceSchedulerViewModel) {
         arrayData[i*5+1] = listDevices[i].hour_on!!.toByte()
         arrayData[i*5+2] = listDevices[i].minutes_on!!.toByte()
         arrayData[i*5+3] = listDevices[i].hour_off!!.toByte()
-        arrayData[i*5+3] = listDevices[i].minutes_off!!.toByte()
+        arrayData[i*5+4] = listDevices[i].minutes_off!!.toByte()
     }
         sendData( RECEIVED_SCHEDULER, arrayData)
 
 }
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    suspend fun requestVoltages():List<Int>?{
+        /* order of voltages are 4 int so
+        Device1 byArray[0,1],
+        Device2 byArray[2,3],
+        Device3 byArray[4,5],
+        battery_Voltage byArray[6,7]
+        Ac_Voltage byArray[8,9],
+
+         */
+        var byteArray: ByteArray = ByteArray(10)
+        byteArray= sendDataWithReturnData(RECEIVED_REPORT_REQ)?: return null
+        val list= mutableListOf<Int>()
+        var temp:Int=0
+
+        for (i in 0 until byteArray.size/2){
+            temp = byteArray[2*i].toInt()
+            temp = byteArray[2*i+1].toInt().shl(8)
+            list.add(temp)
+        }
+        return list.toList()
+    }
 }

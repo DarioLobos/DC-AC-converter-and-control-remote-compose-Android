@@ -166,6 +166,7 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
         initialValue = DiscoverySettings()
     )
 
+
     fun devicesList():List<Devices>{
          return runBlocking {allDevices.value}
     }
@@ -194,6 +195,7 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
     }
 
     fun getMatchFilterLaunch(): ByteArray {
+
         val currentString = match_filter.value // INSTANT, no waiting
                 return currentString.take(7).toByteArray(Charsets.UTF_8)
             }

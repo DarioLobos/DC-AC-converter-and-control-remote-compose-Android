@@ -291,6 +291,8 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context, aware: Wi
                                     Toast.makeText(context, "Storage sync failed. Try again.", Toast.LENGTH_SHORT).show()
                                 } catch (e: Exception) {
                                     println("Aware Restart failed")
+                                    Toast.makeText(context, "WIFI permission failed. Try again.", Toast.LENGTH_SHORT).show()
+
                                 }
                             }
                             isBlurredMat = false
