@@ -1,0 +1,2 @@
+source /home/dario/workspace/Battery charger and DCAC converter/build/bootloader/gdbinit/symbols
+source /home/dario/workspace/Battery charger and DCAC converter/build/bootloader/gdbinit/connect

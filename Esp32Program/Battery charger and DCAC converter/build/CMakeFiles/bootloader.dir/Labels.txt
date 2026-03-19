@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/home/dario/workspace/Battery charger and DCAC converter/build/CMakeFiles/bootloader
+/home/dario/workspace/Battery charger and DCAC converter/build/CMakeFiles/bootloader.rule
+/home/dario/workspace/Battery charger and DCAC converter/build/CMakeFiles/bootloader-complete.rule
+/home/dario/workspace/Battery charger and DCAC converter/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/home/dario/workspace/Battery charger and DCAC converter/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/home/dario/workspace/Battery charger and DCAC converter/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/home/dario/workspace/Battery charger and DCAC converter/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/home/dario/workspace/Battery charger and DCAC converter/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/home/dario/workspace/Battery charger and DCAC converter/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/home/dario/workspace/Battery charger and DCAC converter/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
