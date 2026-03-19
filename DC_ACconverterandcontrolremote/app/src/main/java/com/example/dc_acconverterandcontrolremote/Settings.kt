@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,11 +34,15 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.delay
+import java.util.Calendar
+
 fun restartApp(context: Context) {
     val packageManager = context.packageManager
     val intent = packageManager.getLaunchIntentForPackage(context.packageName)
@@ -73,6 +81,7 @@ fun TextToMatchFilterError (deviceText: String, isError: Boolean) {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context, aware: WifiAware){
@@ -91,6 +100,7 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context, aware: Wi
     val isErrorMat: Boolean =  ( matchFilterText.length!=7) or ( matchFilterText.isEmpty())
     var openDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
 
     Box(propagateMinConstraints = false) {
 
@@ -270,8 +280,10 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context, aware: Wi
                                             settings.matchFilter == matchFilterText && settings.isReady
                                         }
                                     }
-
+                                    delay(100)
+                                        aware.sendMatchFilterToESP32(model.getMatchFilterLaunch())
                                     // 3. ACTION: Restart hardware only after data is confirmed
+                                    delay(300)
                                     aware.closeSession()
                                     delay(300) // Necessary hardware "cooling" period
                                     if (ActivityCompat.checkSelfPermission(
@@ -351,12 +363,22 @@ fun Settings_Screen(model: DeviceSchedulerViewModel, context: Context, aware: Wi
                 supportingText = {TextToDeviceError(numberDevicesText, isErrorDev)},
                 enabled = true,
                 readOnly = false,
-                label = {Text (stringResource(R.string.ipAddress))},
+                label = {Text (stringResource(R.string.clock))},
                 singleLine = true
                             )
 
         }
-    }
+            ElevatedButton(
+                onClick = {
+                    model.sendTimeToWiFI(aware)
+                },
+                modifier = Modifier.wrapContentSize(),
+                shape = MaterialTheme.shapes.extraLarge
+            ) {
+                Text(stringResource(R.string.clock), fontSize = 20.sp)
+            }
+
+        }
     }
 
 }

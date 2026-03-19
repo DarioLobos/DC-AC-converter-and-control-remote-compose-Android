@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import java.util.Calendar
 
 
 data class DiscoverySettings(
@@ -134,6 +135,59 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
             // Use an Int initial value, NOT a String ""
             initialValue = default_nbr_devices
         )
+
+    val CHARGER_HOURON = intPreferencesKey("number_devices")
+
+    val chargerHourOn: StateFlow<Int> = context.myDataStore.data
+        .map { preferences ->
+            preferences[NUMBER_DEVICES] ?:default_nbr_devices
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            // Use an Int initial value, NOT a String ""
+            initialValue = default_nbr_devices
+        )
+
+    val CHARGER_HOUROFF = intPreferencesKey("number_devices")
+
+    val chargerHourOff: StateFlow<Int> = context.myDataStore.data
+        .map { preferences ->
+            preferences[NUMBER_DEVICES] ?:default_nbr_devices
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            // Use an Int initial value, NOT a String ""
+            initialValue = default_nbr_devices
+        )
+
+    val CHARGER_MINUTEON = intPreferencesKey("number_devices")
+
+    val chargerMinuteOn: StateFlow<Int> = context.myDataStore.data
+        .map { preferences ->
+            preferences[NUMBER_DEVICES] ?:default_nbr_devices
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            // Use an Int initial value, NOT a String ""
+            initialValue = default_nbr_devices
+        )
+
+    val CHARGER_MINUTEOFF = intPreferencesKey("number_devices")
+
+    val chargerMinuteOff: StateFlow<Int> = context.myDataStore.data
+        .map { preferences ->
+            preferences[NUMBER_DEVICES] ?:default_nbr_devices
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            // Use an Int initial value, NOT a String ""
+            initialValue = default_nbr_devices
+        )
+
     val MATCH_FILTER = stringPreferencesKey("match_filter")
     val match_filter: StateFlow<String> = context.myDataStore.data
         .map { it[MATCH_FILTER] ?: "12456\n" }
@@ -197,7 +251,8 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
     fun getMatchFilterLaunch(): ByteArray {
 
         val currentString = match_filter.value // INSTANT, no waiting
-                return currentString.take(7).toByteArray(Charsets.UTF_8)
+
+        return currentString.take(7).toByteArray(Charsets.UTF_8)
             }
 
 
@@ -342,12 +397,15 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
             if (on_or_off) byteArrayOf((device_number * 2).toByte()) else byteArrayOf((device_number * 2 + 1).toByte())
 
         viewModelScope.launch(Dispatchers.IO) {
-            aware.sendData(control_remote,byteArray, )
+
+            if(aware.sendData(control_remote,byteArray, )){
+                Toast.makeText(context, R.string.remote, Toast.LENGTH_SHORT)
+                    .show()
+            }
         }
     }
 
     fun sendSchedulerToWiFI( aware: WifiAware) {
-         val  RECEIVED_SCHEDULER= 1
         val devices: List<Devices> = devicesList()
         val byteArray: ByteArray = ByteArray((numberDevices.value*5))
 
@@ -362,10 +420,47 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
 
 
         viewModelScope.launch(Dispatchers.IO) {
-            aware.sendData(RECEIVED_SCHEDULER,byteArray, )
+
+            if(aware.sendData(RECEIVED_SCHEDULER,byteArray, )){
+                Toast.makeText(context, R.string.schedulerSent, Toast.LENGTH_SHORT)
+                    .show()
+            }
         }
     }
 
+    fun sendSchedulerChargerToWiFI( aware: WifiAware) {
+
+        val byteArray: ByteArray = ByteArray(4)
+
+            byteArray[0]= chargerHourOn.value.toByte()
+            byteArray[1]= chargerMinuteOn.value.toByte()
+            byteArray[2]= chargerHourOff.value.toByte()
+            byteArray[3]= chargerMinuteOff.value.toByte()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            if(aware.sendData(RECEIVED_CHARGER_TIME,byteArray, )) {
+                Toast.makeText(context, R.string.chargerSent, Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
+
+    fun sendTimeToWiFI( aware: WifiAware) {
+
+        val byteArray: ByteArray = ByteArray(3)
+        val calendar = Calendar.getInstance()
+
+        byteArray[0]= calendar.get(Calendar.SECOND).toByte()
+        byteArray[1]= calendar.get(Calendar.MINUTE).toByte()
+        byteArray[2]= calendar.get(Calendar.HOUR_OF_DAY).toByte()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            if(aware.sendData(RECEIVED_TIME,byteArray, )) {
+                Toast.makeText(context, R.string.clockSent, Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
 
     fun deviceName(devicenbr: Int): String {
 
@@ -373,7 +468,6 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
         val device = allDevices.value.find { it.device_number == devicenbr }
         return device?.device_name ?: "Device $devicenbr"
     }
-
 
     fun setselectedTime(
         hourToSet: Int,
@@ -406,6 +500,34 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
         return "$hourToSet : $minuteToSet"
     }
 
+    fun setSelectedTimeCharger(
+        hourToSet: Int,
+        minuteToSet: Int,
+        on_or_off: Boolean
+    ): String {
+
+
+        // 2. Perform the update if the inputs are valid
+
+            if (on_or_off) {
+                viewModelScope.launch {
+                    context.myDataStore.edit {
+                        it[CHARGER_HOURON] = hourToSet
+                        it[CHARGER_MINUTEON]=minuteToSet
+                    }
+                }
+
+            }
+            else {
+                viewModelScope.launch {
+                    context.myDataStore.edit {
+                        it[CHARGER_HOUROFF] = hourToSet
+                        it[CHARGER_MINUTEOFF]=minuteToSet
+                    }
+                }
+            }
+        return "$hourToSet : $minuteToSet"
+    }
 
     fun TimesToshow(device_number: Int, on_or_off: Boolean): String {
         // 1. Get the actual device object from your StateFlow (RAM)
@@ -419,6 +541,16 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
         val h = hour.toString().padStart(2, '0')
         val m = minute.toString().padStart(2, '0')
             return "$h : $m"
+    }
+
+    fun TimesToshowCharger( on_or_off: Boolean): String {
+        // 1. Get the actual device object from your StateFlow (RAM)
+        val hour = if (on_or_off) chargerHourOn.value else chargerHourOff.value
+        val minute = if (on_or_off) chargerMinuteOn.value else chargerMinuteOff.value
+        // 4. Format to ensure 2 digits (e.g., 09:05)
+        val h = hour.toString().padStart(2, '0')
+        val m = minute.toString().padStart(2, '0')
+        return "$h : $m"
     }
 
 

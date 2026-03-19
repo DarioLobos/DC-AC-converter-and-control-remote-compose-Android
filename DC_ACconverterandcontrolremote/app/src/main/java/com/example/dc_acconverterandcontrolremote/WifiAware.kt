@@ -647,4 +647,11 @@ suspend fun sendSchedulerToEsp32(viewModel: DeviceSchedulerViewModel) {
         }
         return list.toList()
     }
+    suspend fun sendMatchFilterToESP32(byteArray: ByteArray){
+
+        sendData( RECEIVED_MATCH_FILTER, byteArray)
+    }
 }
+
+
+

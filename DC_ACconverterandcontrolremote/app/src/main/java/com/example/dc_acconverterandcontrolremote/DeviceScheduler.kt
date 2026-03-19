@@ -141,31 +141,33 @@ fun DeviceControlCard( context: Context, device_number: Int, deviceName: String,
         val modifierTextON: Modifier = Modifier
             .constrainAs(timeOn) {
                 top.linkTo(titleName.bottom, margin = 5.dp)
-                bottom.linkTo(daysOfWeek.top, margin = 5.dp)
-                end.linkTo(editOn.start)
+                start.linkTo(parent.start)
+                bottom.linkTo(editOn.top, margin = 5.dp)
+                end.linkTo(timeOff.start)
             }
 
         val modifierEditOn: Modifier = Modifier
             .constrainAs(editOn) {
-                top.linkTo(titleName.bottom, margin = 5.dp)
+                top.linkTo(timeOn.bottom, margin = 5.dp)
                 bottom.linkTo(daysOfWeek.top, margin = 5.dp)
-                start.linkTo(timeOn.end)
+                start.linkTo(parent.start)
                 end.linkTo(editOff.start)
             }
 
         val modifierTextOFF: Modifier = Modifier
             .constrainAs(timeOff) {
                 top.linkTo(titleName.bottom, margin = 5.dp)
-                bottom.linkTo(daysOfWeek.top, margin = 5.dp)
-                start.linkTo(editOn.end)
-                end.linkTo(editOff.start)
+                bottom.linkTo(editOff.top, margin = 5.dp)
+                start.linkTo(timeOn.end)
+                end.linkTo(parent.end)
             }
 
         val modifierEditOff: Modifier = Modifier
             .constrainAs(editOff) {
-                top.linkTo(titleName.bottom, margin = 5.dp)
+                top.linkTo(timeOff.bottom, margin = 5.dp)
                 bottom.linkTo(daysOfWeek.top, margin = 5.dp)
-                start.linkTo(timeOff.end)
+                start.linkTo(editOn.end)
+                end.linkTo(parent.end)
             }
 
 
@@ -204,9 +206,15 @@ fun DeviceControlCard( context: Context, device_number: Int, deviceName: String,
         EditTextONOFF(context, device_number, false, modifierEditOff, viewModel)
 
         createHorizontalChain(
+            timeOn, timeOff,
+            chainStyle = ChainStyle.SpreadInside
+        )
+
+        createHorizontalChain(
             editOn, editOff,
             chainStyle = ChainStyle.SpreadInside
         )
+
 
         val options = listOf(
             stringResource(R.string.Sun), stringResource(R.string.Mon),

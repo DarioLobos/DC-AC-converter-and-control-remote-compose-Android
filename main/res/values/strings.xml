@@ -68,6 +68,13 @@
     <string name="sensed">Voltages measured by the microcontroller: </string>
     <string name="connectionError">ERROR: Please check connection</string>
     <string name="permissionError">ERROR: Application have no permission granted</string>
+    <string name="sendCharger">Send charger scheduler to ESP32</string>
+    <string name="chargerName">Charger time scheduler</string>
+    <string name="clock">Update ESP32 Time</string>
+    <string name="clockSent">Current time sent to Esp32</string>
+    <string name="chargerSent">Scheduler for charger sent</string>
+    <string name="schedulerSent">Scheduler for Devices sent</string>
+    <string name="remote">Control remote action was sent.</string>
 
 
 </resources>
