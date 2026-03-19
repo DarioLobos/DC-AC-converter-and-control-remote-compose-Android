@@ -81,8 +81,8 @@ fun MainApp(context: Context, viewModel: DeviceSchedulerViewModel, aware: WifiAw
             when (currentDestination) {
                 // Pass 'aware' here to match our new MainScreen definition
                 MenuList.HOME -> MainScreen(localContext, viewModel, aware)
-                MenuList.VOLTAGES -> Voltage_Screen()
-                MenuList.CHARGERSCHEDULER -> ChargerScheduler_Screen()
+                MenuList.VOLTAGES -> Voltage_Screen(context,viewModel,aware)
+                MenuList.CHARGERSCHEDULER -> ChargerScheduler_Screen(context,viewModel, aware)
                 MenuList.DEVICESSCHEDULER -> DeviceScheduler_Screen( context, viewModel, aware)
                 MenuList.SETTINGS -> Settings_Screen(viewModel, localContext, aware)
             }

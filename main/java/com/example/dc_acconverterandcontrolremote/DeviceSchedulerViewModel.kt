@@ -538,8 +538,11 @@ class DeviceSchedulerViewModel(private val devicesRepository: DevicesRepository,
         val hour = if (on_or_off) device.hour_on else device.hour_off
         val minute = if (on_or_off) device.minutes_on else device.minutes_off
         // 4. Format to ensure 2 digits (e.g., 09:05)
+
         val h = hour.toString().padStart(2, '0')
+
         val m = minute.toString().padStart(2, '0')
+
             return "$h : $m"
     }
 

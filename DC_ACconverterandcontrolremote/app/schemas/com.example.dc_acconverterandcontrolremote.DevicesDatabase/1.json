@@ -1,0 +1,60 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "3611d79e49c07180fd4767cf2da82d4d",
+    "entities": [
+      {
+        "tableName": "devices",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`device_number` INTEGER, `device_name` TEXT, `hour_on` INTEGER, `minutes_on` INTEGER, `hour_off` INTEGER, `minutes_off` INTEGER, `days_week` INTEGER, PRIMARY KEY(`device_number`))",
+        "fields": [
+          {
+            "fieldPath": "device_number",
+            "columnName": "device_number",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "device_name",
+            "columnName": "device_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "hour_on",
+            "columnName": "hour_on",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "minutes_on",
+            "columnName": "minutes_on",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "hour_off",
+            "columnName": "hour_off",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "minutes_off",
+            "columnName": "minutes_off",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "days_week",
+            "columnName": "days_week",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "device_number"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3611d79e49c07180fd4767cf2da82d4d')"
+    ]
+  }
+}
