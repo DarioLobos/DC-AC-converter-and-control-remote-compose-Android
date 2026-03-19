@@ -200,15 +200,15 @@ fun DeviceControlCard( context: Context, device_number: Int, deviceName: String,
             fontWeight = FontWeight.Bold,
             modifier = modifierTextOFF
         )
+        createHorizontalChain(
+            timeOn, timeOff,
+            chainStyle = ChainStyle.SpreadInside
+        )
 
         EditTextONOFF(context, device_number, true, modifierEditOn, viewModel)
 
         EditTextONOFF(context, device_number, false, modifierEditOff, viewModel)
 
-        createHorizontalChain(
-            timeOn, timeOff,
-            chainStyle = ChainStyle.SpreadInside
-        )
 
         createHorizontalChain(
             editOn, editOff,

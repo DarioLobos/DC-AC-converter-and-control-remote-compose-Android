@@ -135,7 +135,7 @@ fun ChargerControlCard(context: Context,
         val modifierEditOn: Modifier = Modifier
             .constrainAs(editOn) {
                 top.linkTo(timeOn.bottom, margin = 5.dp)
-                bottom.linkTo(daysOfWeek.top, margin = 5.dp)
+                bottom.linkTo(parent.bottom, margin = 5.dp)
                 start.linkTo(parent.start)
                 end.linkTo(editOff.start)
             }
@@ -177,14 +177,16 @@ fun ChargerControlCard(context: Context,
             modifier = modifierTextOFF
         )
 
-        EditTextONOFF(context,true, modifierEditOn, viewModel)
-
-        EditTextONOFF(context, false, modifierEditOff, viewModel)
-
         createHorizontalChain(
             timeOn, timeOff,
             chainStyle = ChainStyle.SpreadInside
         )
+
+
+        EditTextONOFF(context,true, modifierEditOn, viewModel)
+
+        EditTextONOFF(context, false, modifierEditOff, viewModel)
+
 
         createHorizontalChain(
             editOn, editOff,
